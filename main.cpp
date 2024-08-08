@@ -4,7 +4,7 @@
 int main()
 {
     // Open the default camera (usually the first connected camera)
-    cv::VideoCapture cap(0);
+    cv::VideoCapture cap(2);
 
     // Check if the camera opened successfully
     if (!cap.isOpened())
@@ -16,11 +16,12 @@ int main()
     cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
 
-    cv::Mat frame;
+    cv::Mat frame, grayscale;
     while (true)
     {
         // Capture frame-by-frame
         cap >> frame;
+        cv::cvtColor(frame, grayscale, cv::COLOR_BGR2GRAY);
 
         // If the frame is empty, break immediately
         if (frame.empty())
@@ -31,6 +32,7 @@ int main()
 
         // Display the resulting frame
         cv::imshow("USB Camera Feed", frame);
+        cv::imshow("Grayscale", grayscale);
 
         // Press 'q' on the keyboard to exit the loop
         if (cv::waitKey(1) == 'q')
