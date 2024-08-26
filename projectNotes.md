@@ -1,3 +1,41 @@
+# Current Focus
+- Background subtraction
+  - Measuring CPU load and other computational resources being used while applying different subtraction methods
+
+# Goals to work towards
+
+## 1. Hand Detection and Segmentation
+- [ ] **Skin Color Segmentation**: Learn to detect and segment the hand based on skin color using color spaces like HSV or YCrCb.
+  - [ ] Attempting to do the segmentation with grayscale 
+- [ ] **Contour Detection**: Understand how to detect contours in the segmented hand region, which are useful for identifying the hand’s shape and structure.
+
+## 2. Feature Extraction
+- [ ] **Keypoint Detection**: Learn techniques to identify keypoints on the hand, such as fingertips, knuckles, and the center of the palm.
+- [ ] **Convex Hull and Defects**: Learn to calculate the convex hull of the hand and find convexity defects (points between fingers), useful for recognizing gestures like counting fingers.
+- [ ] **Hand Landmarks**: Explore advanced methods like the MediaPipe Hand model, which provides precise hand landmarks for each finger.
+
+## 3. Gesture Recognition
+- [ ] **Template Matching**: Start with simple template matching where you compare the detected hand shape against predefined templates for different gestures.
+- [ ] **Machine Learning**: Learn to train a machine learning model to recognize gestures. Start with simpler models like k-Nearest Neighbors (k-NN) or SVM, and then explore more complex models like Convolutional Neural Networks (CNNs) for better accuracy.
+- [ ] **Deep Learning**: Explore deep learning models that can learn complex patterns in hand gestures. Frameworks like TensorFlow and PyTorch are useful for training these models.
+
+## 4. Tracking
+- [ ] **Object Tracking**: Learn how to track the hand’s movement across frames to recognize gestures involving motion (e.g., swiping or waving).
+- [ ] **Kalman Filter or Optical Flow**: Understand how to implement tracking algorithms like Kalman Filters or Optical Flow for smooth hand tracking.
+
+## 5. Integration and Testing
+- [ ] **Gesture Control**: Implement a simple control system where recognized gestures trigger specific actions (e.g., controlling media playback or navigating a user interface).
+- [ ] **Real-Time Performance**: Focus on optimizing your code for real-time performance, ensuring that gesture recognition is fast and accurate.
+
+## Suggested Learning Path
+1. [ ] **Hand Detection and Segmentation**: Experiment with skin color segmentation and contour detection.
+2. [ ] **Feature Extraction**: Implement convex hull and convexity defects to identify fingers.
+3. [ ] **Gesture Recognition**: Start with template matching, then move on to machine learning.
+4. [ ] **Tracking**: Implement object tracking for gestures involving motion.
+5. [ ] **Integration**: Build a small application where hand gestures control an aspect of your system.
+
+---
+
 # Hand Gesture Detection for Incrementing/Decrementing Integer Variable
 
 To write a C++ program that detects subtle hand gestures for controlling an integer variable, you need to understand several fundamental concepts in image processing. Here are the key areas you should focus on:
@@ -54,6 +92,7 @@ To write a C++ program that detects subtle hand gestures for controlling an inte
 - **Contour Detection**: Finding contours that represent hand shapes using methods like `findContours` in OpenCV.
 
 ### Side quest for background subtraction
+- [OpenCV reference](https://docs.opencv.org/3.4/d1/dc5/tutorial_background_subtraction.html)
 - In a nutshell, background subtraction calculates the `foreground mask` by subtracts the `current frame` from the `background model`
 - Background modeling consists of two steps
   - Background initialization
