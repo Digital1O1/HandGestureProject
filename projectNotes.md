@@ -1,6 +1,6 @@
 # Current Focus
-- Background subtraction
-  - Measuring CPU load and other computational resources being used while applying different subtraction methods
+- Skin segmentation
+  - Determining to either use HSV or YCrCb
 
 # Goals to work towards
 
