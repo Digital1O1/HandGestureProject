@@ -16,7 +16,7 @@ using namespace cv;
 using namespace std;
 using namespace std::chrono;
 
-#define USBCAMERA 0
+#define USBCAMERA 2
 
 int main()
 {

@@ -5,29 +5,27 @@
 
 ---
 
-# Grayscale Detection Approaches:
-- [ ] **Skin Color Segmentation**: Learn to detect and segment the hand based on skin color using color spaces like HSV or YCrCb.
+~~# Grayscale Detection Approaches:~~
+~~- [ ] **Skin Color Segmentation**: Learn to detect and segment the hand based on skin color using color spaces like HSV or YCrCb.~~
 
-- [ ] **Background Subtraction:** Use background subtraction techniques to isolate moving objects (like hands) in a grayscale video. This method focuses on detecting changes in the scene rather than identifying specific colors.
-  
-- [ ] **Edge Detection:** Apply edge detection methods (e.g., Canny edge detection) to identify the contours of a hand in a grayscale image. This can be effective for gesture recognition, especially if the background is relatively uniform.
-  
-- [ ] **Optical Flow:** Use optical flow methods to track the movement of pixels between frames in a video sequence. This can be used to detect hand movements in grayscale images without relying on color information.
-  
-- [ ] **Shape and Contour Analysis:** After detecting motion, analyze the shape and contours of the moving object to differentiate between a hand and other objects.
+~~- [ ] **Background Subtraction:** Use background subtraction techniques to isolate moving objects (like hands) in a grayscale video. This method focuses on detecting changes in the scene rather than identifying specific colors.~~
 
-### Performance Considerations on Raspberry Pi:
-- [ ] **Grayscale Processing:** Grayscale images require less computational power than color images, which is beneficial on a Raspberry Pi. The reduced data size also speeds up processing.
-  
-- [ ] **Trade-offs:** While you lose the ability to detect skin tones directly, the faster processing might allow for real-time gesture recognition, especially if combined with other features like motion tracking.
+~~- [ ] **Edge Detection:** Apply edge detection methods (e.g., Canny edge detection) to identify the contours of a hand in a grayscale image. This can be effective for gesture recognition, especially if the background is relatively uniform.~~
+
+~~- [ ] **Optical Flow:** Use optical flow methods to track the movement of pixels between frames in a video sequence. This can be used to detect hand movements in grayscale images without relying on color information.~~
+
+~~- [ ] **Shape and Contour Analysis:** After detecting motion, analyze the shape and contours of the moving object to differentiate between a hand and other objects.~~
+
+~~### Performance Considerations on Raspberry Pi:~~
+~~- [ ] **Grayscale Processing:** Grayscale images require less computational power than color images, which is beneficial on a Raspberry Pi. The reduced data size also speeds up processing.~~
+
+~~- [ ] **Trade-offs:** While you lose the ability to detect skin tones directly, the faster processing might allow for real-time gesture recognition, especially if combined with other features like motion tracking.~~
 
 ---
 
 # HSV Versus YCrCb
-
-## HSV 
-
-### Reference source : https://www.geeksforgeeks.org/hsv-color-model-in-computer-graphics/
+ 
+## [HSV](https://www.geeksforgeeks.org/hsv-color-model-in-computer-graphics/) 
 
 ### What is HSV?
 - Most accurate way humans perceive color
@@ -59,6 +57,10 @@
   - From bottom to top
     - Brightness increases 
   - Hence the white at the top
+- Chroma 
+  - Purity/intensity of a color in relation to gray
+  - Represents how vivid/saturated a color appears 
+    - Higher the chroma, the more intense the color
     ![alt text](screenshots/hsv1-200x150.png)
 
 ### Applications
@@ -81,10 +83,10 @@
     - Determines how light or dark a color appears.
   - `Cr` (Chrominance-Red): 
     - Represents the difference between the `red component` and the `luminance`. 
-    - Adds the red color information to the image.
+    - Adds the `red` color information to the image.
   - `Cb` (Chrominance-Blue): 
     - Represents the difference between the `blue component` and the `luminance`
-    - Adds the blue color information to the image.
+    - Adds the `blue` color information to the image.
 
 ---
 
