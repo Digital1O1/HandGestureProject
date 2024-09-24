@@ -11,7 +11,7 @@
 ### 3. **Adjusting the Standard Deviation (σ)**:
 - The `standard deviation` in the `Gaussian noise` controls the `intensity` of the noise:
   - Remember: Standard deviation `controls the spread of the noise values`
-      - Higher values --> morevariation
+      - Higher values --> more variation
   - **Small σ (e.g., 5 or 10)**: Small perturbations in pixel intensity, minimal effect on the image.
   - **Large σ (e.g., 50 or 100)**: Strong perturbations in pixel intensity, visible noise that can blur the edges.
   
