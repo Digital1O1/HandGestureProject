@@ -1,13 +1,95 @@
-# Areas you're currently working on:
-- Contour detection using `Canny edge detection` in the `DetectingContoursInGeneral` folder
-  - Added skin detection stuff with HSV values
-  - Have to try with YCrBr values since it's more robus to lighting variations  
+# Where you left off last time Nov 13th
+Learn about optical flow for motion tracking
 
-# Things to focus on
-- Since the surgeon is wearing a glove, don't worry about detecting skin and focus on 
-  - Analyzing shapes
-  - Contours 
-  - Movement
+---
+
+# Purpose of adaptive thresholding 
+## What does it do
+Adaptive thresholding calculates thresholds based on local pixel intensity, which is ideal for images with varying lighting. A Python code example was provided and later translated to C++ to process a video frame by frame.
+
+## Does adaptiveThresholding help with edge detection with Canny edge detector?
+Yes, adaptive thresholding helps isolate key areas, allowing Canny to detect edges more effectively. In cases with sufficient lighting, adaptive thresholding can replace Gaussian blurring 
+as a preprocessing step, especially if noise levels are low.
+---
+
+# Motion Gesture Recognition for Surgical Training
+
+## Step 1: Optical Flow for Motion Tracking
+### Introduction to Optical Flow
+
+Optical flow helps in tracking hand movements by analyzing pixel changes 
+across frames. This technique can give valuable information about 
+direction, speed, and general motion patterns of the hand.
+
+### Methods like Lucas-Kanade and Farneback in OpenCV
+
+Learn methods like Lucas-Kanade and Farneback optical flow in OpenCV to 
+track hand motions in real-time.
+
+## Step 2: Feature Descriptors (HOG, SIFT, SURF)
+### Introduction to Feature Descriptors
+
+Feature descriptors like Histogram of Oriented Gradients (HOG), SIFT 
+(Scale-Invariant Feature Transform), or SURF (Speeded-Up Robust Features) 
+provide a way to capture essential patterns in an image for detecting and 
+classifying gestures.
+
+### Choosing the Right Feature Descriptor
+
+*   HOG is useful for detecting shapes and contours.
+*   SIFT and SURF are excellent for identifying and matching specific hand 
+features across frames.
+
+## Step 3: Gesture Recognition using Machine Learning Models
+### Introduction to Machine Learning Models
+
+Now that you have a foundation in image processing, the next step is 
+training a machine learning or deep learning model that can recognize 
+gestures based on extracted features.
+
+### Choosing the Right Model
+
+*   Start with Support Vector Machines (SVM), K-Nearest Neighbors (KNN)
+*   Dive into Convolutional Neural Networks (CNNs) for more complex 
+classification tasks.
+
+## Step 4: Temporal Analysis with Recurrent Neural Networks (RNNs) or 3D 
+CNNs
+### Introduction to Temporal Models
+
+For complex hand gestures that unfold over several frames, temporal models 
+like Long Short-Term Memory (LSTM) networks or 3D CNNs can capture 
+time-based patterns.
+
+### Benefits of Temporal Models
+
+*   Allow for more accurate gesture classification in sequential data.
+
+## Step 5: Data Augmentation and Preprocessing for Robustness
+### Introduction to Data Augmentation
+
+Learning about data augmentation techniques like rotations, flips, 
+brightness adjustments can help improve model robustness.
+
+### Focus on Preprocessing Techniques
+
+Focus on preprocessing techniques that can help the model generalize 
+better, especially under various lighting and positioning that may occur 
+during surgery.
+
+## Step 6: Contour and Shape Analysis
+### Introduction to Shape Analysis
+
+Investigate shape analysis techniques like convex hull, convexity defects 
+that can give more structured data on hand shape.
+
+### Combining with Contour Detection
+
+Combining these with your contour detection can help refine gesture 
+classification.
+
+
+
 ---
 
 # Concepts for Detecting Hand Gestures with Gloves
@@ -15,7 +97,7 @@
 To effectively detect hand gestures for someone wearing a glove, focus on the following concepts and techniques:
 
 ## 1. Computer Vision Basics
-- **Image Processing**: Understand fundamental image processing techniques such as filtering, morphological operations, and thresholding.
+- **Image Processing**: Understand fundamental image processing techniques such as filtering, morphological operations, and thresholding;including adaptive thresholding.
 - **Contour Detection**: Familiarize yourself with detecting and analyzing contours in images, which will help identify the shape of the hand.
 
 ## 2. Feature Detection
@@ -46,11 +128,34 @@ To effectively detect hand gestures for someone wearing a glove, focus on the fo
 - **PWM Control Basics**: Familiarize yourself with how to control PWM signals to drive an LED based on detected gestures.
 - **Microcontroller Programming**: Understand how to program microcontrollers (like Arduino or Raspberry Pi) to interact with the computer vision system.
 
-## Summary
-Focusing on these concepts will equip you with the knowledge and skills needed to detect hand gestures while someone is wearing a glove. You may not rely on skin detection but rather on shape, motion, and features that distinguish gestures effectively. Start with the basics and progressively dive into more advanced techniques as you build your project.
+## 9. Environmental Constraints in the Operating Room
+- **Glove Material Properties**: Test how different glove materials reflect light under the harsh lighting conditions of an operating room. Fine-tuning methods to handle these reflections will help maintain consistent gesture detection.
+- **Occlusions and Object Handling**: Surgeons often hold tools, which may cause partial occlusion of the hand. Study techniques to detect gestures even when only part of the hand is visible.
+- **Complex Backgrounds**: The dynamic background in operating rooms (e.g., tools, other people) will require robust background subtraction techniques, such as adaptive background models (e.g., MOG2) and foreground masking.
 
+## 10. Multi-Hand Detection
+- **Multi-Hand Detection**: Detecting multiple hands simultaneously is important in an operating room setting. Techniques like multi-object tracking and separating which hand belongs to which person can reduce confusion.
+
+## 11. Temporal Sequence Modeling
+- **Recurrent Neural Networks (RNNs) or LSTMs**: These models may be useful for recognizing gestures that occur as part of a sequence (e.g., a surgeon giving signals in steps).
+
+## 12. Noise and Movement Stability
+- **Kalman Filtering or Particle Filtering**: In addition to Gaussian smoothing, use these filters to improve stability by accounting for real-world motion noise (jitter, accidental movements).
+
+## 13. Gesture Calibration
+- **Calibration for Different Surgeons**: Implement a calibration step to adjust for different surgeons' hand sizes and gesture preferences. This ensures the system is adaptive and responsive to the needs of different users.
+
+## 14. Haptic Feedback and System Response
+- **Haptic Feedback**: Explore haptic feedback to help surgeons confirm the recognition of gestures. This could provide immediate feedback when gestures are detected, particularly in time-sensitive situations.
+
+## 15. Surgical Tool Tracking
+- **Tool and Hand Differentiation**: Develop methods to distinguish between hand gestures and tool movements, as both may need to be tracked in certain contexts.
+
+## 16. Gesture Safety and Robustness
+- **Reducing False Positives**: In a surgical environment, incorrect gesture recognition can be critical. Consider implementing redundant gesture verification to prevent false positives or incorrect interpretations.
 
 ---
+<!-- 
 # Hand Gesture Detection for Incrementing/Decrementing Integer Variable
 
 To write a C++ program that detects subtle hand gestures for controlling an integer variable, you need to understand several fundamental concepts in image processing. Here are the key areas you should focus on:
@@ -98,9 +203,9 @@ To write a C++ program that detects subtle hand gestures for controlling an inte
         - Thus making subsequent contour analysis more accurate
   - Stability in tracking
     - Temporal smoothing
-      - With video processing gaussian blur can help `in stabailizing the detected features` over time by `reducing frame to frame variations`
+      - With video processing gaussian blur can help `in stabilizing the detected features` over time by `reducing frame to frame variations`
     - Benefit for gesture detection
-      - Stable detection of hand gesutres across multiple frames needed for real time appliactions
+      - Stable detection of hand gestures across multiple frames needed for real time applications
       - Smoothing helps with achieving `consistent detection`, `reducing jitter` and `sudden changes` caused by noise
 - **Thresholding**: Converting grayscale images to binary images using techniques like Otsu's method.
 
@@ -133,63 +238,4 @@ To write a C++ program that detects subtle hand gestures for controlling an inte
 - **Smoothing**: Smoothing the detected gestures to avoid sudden jumps in the recognized gesture.
 
 ## 7. Action Mapping
-- **Gesture to Action**: Mapping recognized gestures to specific actions like incrementing or decrementing an integer variable.
-
-## 8. Performance Optimization
-- **Real-time Processing**: Ensuring that your program can process frames in real-time.
-- **Efficient Algorithms**: Using efficient algorithms and possibly leveraging hardware acceleration.
-
-# Other concepts you have to understand 
-
-## 1. Feature Extraction
-- **Key Points and Landmarks**: Identify and track specific points on the hand, such as fingertips and knuckles. Techniques include Haar cascades, Histograms of Oriented Gradients (HOG), and MediaPipe Hand model.
-- **Descriptive Features**: Extract features like hand shape, size, and orientation to distinguish between gestures.
-
-## 2. Gesture Recognition
-- **Template Matching**: Compare detected hand shapes against predefined gesture templates.
-- **Machine Learning Models**: Use models like Support Vector Machines (SVMs), Neural Networks (NNs), and Convolutional Neural Networks (CNNs). Deep learning frameworks such as TensorFlow and PyTorch are useful for training complex models.
-- **Dynamic Time Warping (DTW)**: Recognize temporal gestures by comparing sequences of hand positions over time.
-
-## 3. Background Subtraction
-- **Static Background Subtraction**: Techniques like Gaussian Mixture Models (GMM) to differentiate the hand from a static background.
-- **Adaptive Background Subtraction**: For dynamic environments where the background changes over time.
-
-## 4. Image Segmentation
-- **Thresholding**: Use adaptive or global thresholding to segment the hand from the background.
-- **Region Growing**: Segment regions based on pixel connectivity and similarity.
-
-## 5. Tracking Algorithms
-- **Object Tracking**: Track the hand’s movement using algorithms like Kalman Filters, Mean Shift, or Optical Flow.
-- **Multiple Object Tracking**: For scenarios with multiple hands or gestures being tracked simultaneously.
-
-## 6. Depth Sensing
-- **3D Gesture Recognition**: Utilize depth cameras (e.g., Microsoft Kinect or Intel RealSense) to capture 3D hand movements for more accurate recognition.
-- **Point Cloud Processing**: Analyze 3D point clouds for gesture recognition.
-
-## 7. Real-Time Processing
-- **Optimization Techniques**: Ensure efficient real-time performance by using optimized algorithms and parallel processing.
-- **Hardware Acceleration**: Utilize GPUs or specialized hardware to speed up image processing tasks.
-
-## 8. Post-Processing
-- **Filtering**: Apply smoothing filters to reduce noise and jitter in detected gestures.
-- **Gesture Validation**: Implement logic to validate and confirm gestures to minimize false positives.
-
-## 9. User Interface Integration
-- **Feedback Mechanism**: Provide visual or auditory feedback based on recognized gestures.
-- **Control Mapping**: Map recognized gestures to specific actions or controls in your application.
-
-## Example Workflow for Real-Time Hand Gesture Detection
-
-1. **Capture Frames**: Continuously capture frames from a camera.
-2. **Preprocess Frames**: Convert to grayscale, apply Gaussian blur, and threshold the image.
-3. **Detect and Segment Hand**: Use background subtraction or segmentation to isolate the hand.
-4. **Extract Features**: Detect key points and extract features relevant to gesture recognition.
-5. **Recognize Gesture**: Compare features against predefined gestures using machine learning or template matching.
-6. **Update UI/Controls**: Map recognized gestures to actions and update the user interface accordingly.
-
-## Resources and Tools
-
-- **OpenCV**: For image processing and basic object detection.
-- **TensorFlow/PyTorch**: For training and using deep learning models.
-- **MediaPipe**: For pre-built models and pipelines for hand and pose detection.
-- **Depth Cameras**: For enhanced gesture recognition with depth data.
+- **Gesture to Action**: -->
