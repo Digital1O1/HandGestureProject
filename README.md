@@ -1,15 +1,25 @@
-# Where you left off last time Nov 13th
-Learn about optical flow for motion tracking
-
+# Where you left off last time Dec 19th
+Mess around with Lucas-Kanade Optical example
+- Focused on : `cv::goodFeaturesToTrack(prevGray, prevPoints, 100, 0.3, 7);`
+  - Going to play around with parameters 
+    - maxCorners
+    - qualityLevel
+    - minDistance
+    - Experiment with/without preprocessing (YCrCb masking, Gaussian blur) to see how it affects the detected points
+## Keep reviewing Lucas-Kanade 
 ---
 
 # Purpose of adaptive thresholding 
 ## What does it do
-Adaptive thresholding calculates thresholds based on local pixel intensity, which is ideal for images with varying lighting. A Python code example was provided and later translated to C++ to process a video frame by frame.
+Adaptive thresholding calculates thresholds based on `local pixel intensity`, which is ideal for images with varying lighting. 
+
+A Python code example was provided and later translated to C++ to process a video frame by frame.
 
 ## Does adaptiveThresholding help with edge detection with Canny edge detector?
-Yes, adaptive thresholding helps isolate key areas, allowing Canny to detect edges more effectively. In cases with sufficient lighting, adaptive thresholding can replace Gaussian blurring 
-as a preprocessing step, especially if noise levels are low.
+
+Yes, adaptive thresholding helps isolate key areas, allowing Canny to detect edges more effectively. In cases with sufficient lighting, `adaptive thresholding can replace Gaussian blurring 
+as a preprocessing step`, especially if noise levels are low.
+
 ---
 
 # Motion Gesture Recognition for Surgical Training

@@ -9,7 +9,7 @@
 using namespace cv;
 using namespace std;
 
-#define USBCAMERA 2
+#define USBCAMERA 0
 
 // Global variables for trackbar positions
 int lowerH = 0, upperH = 20;

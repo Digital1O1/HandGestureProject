@@ -1,4 +1,64 @@
-# Optical Flow for Motion Gesture Recognition
+# OpenCV Notes
+
+## Definition of Optical Flow
+- Pattern of apparent motion in image objects between two consecutive frames caused by `movement of the object` or `camera`
+- Consider the image below 
+
+![alt text](Screenshots/optical_flow_basic1.jpg)
+- Shows ball moving in 5 consecutive frames 
+- Arrow shows displacement vector
+
+## Optical flow has numerous applications in areas like
+- Structure from Motion
+- Video compression
+- Video stabilization
+
+## Optical flow works on several assumptions
+- Pixel intensities of an object don't change between consecutive frames
+- Neighbouring pixels have similar motion
+
+## Lucas-Kanade Method
+- Takes a 3x3 patch around the point so all 9 points will have the same motion
+  - We can then find `fx` `fy` `ft` for those 9 points 
+  - So our problem becomes `solving 9 equations` with `two unknown variables` which is over-determined
+  - Better solution is obtained with `least square fit method`
+  - Below is the final solution which two equation-two unknown problem and to get the solution
+
+## From the user's POV
+- Idea is simple
+  - Get some points to track
+  - Get the optical flow vectors of those points 
+  - But there are some issues 
+    - Small motions are `removed`
+    - Large motions become `small motions`
+    - So by applying `Lucas_kanade` we get optical flow along `with the scale`
+
+
+# Applying adaptive thresholding won't help much with optical flow
+- Optical flow computes `motion vectors between frames` which are already numerical representations of movement
+- While adaptive thresholding operates on `pixel intensity values`
+  - Thus making it irrelevant to the motion vectors
+
+# Situations where thresholding could help with optical flow
+
+## Motion masking (COME BACK TO THIS)
+- Use adaptive thresholding to `segment regions of interest` (e.g., the hand) and `create a mask`.
+- Apply optical flow `only within the masked regions`, focusing on hand movement while ignoring the background.
+- Benefit: `Reduces computational load` and `improves motion tracking accuracy` by isolating the moving object.
+
+## Post-Processing Flow Field:
+
+- After calculating optical flow, you can apply thresholding (not necessarily adaptive) to filter out small, insignificant motion vectors caused by noise or minor pixel shifts.
+- Benefit: Simplifies motion patterns and focuses on meaningful gestures.
+
+## Hybrid Approaches:
+
+- Combine adaptive thresholding with motion detection to enhance robustness under varying lighting conditions. For example:
+  - Adaptive thresholding isolates the hand region.
+  - Optical flow tracks movement within that region.
+
+
+# Optical Flow for Motion Gesture Recognition : LLM Generated Response
 =====================================================
 
 ## Overview
