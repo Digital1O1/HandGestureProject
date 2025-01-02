@@ -1,80 +1,22 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <vector>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/videoio.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/video.hpp>
-#include <opencv2/bgsegm.hpp>
 
-// Global variables for YCrCb trackbar positions
-int lowerY = 0, upperY = 255;
-int lowerCr = 110, upperCr = 135;
-int lowerCb = 100, upperCb = 120;
-
-// Global variables for goodFeaturesToTrack()
-int maxCorners = 100;  // Integer value for maxCorners
-int qualityLevel = 30; // Integer value (percentage) for quality level of corners
-int minDistance = 7;   // Integer value for the minimum distance between corners
-
-using namespace cv;
-using namespace std;
-
-// Function to map trackbar integer values to double
-double mapTrackbarToDouble(int trackbarValue, double min, double max)
-{
-    return min + (max - min) * (trackbarValue / 255.0); // Map the trackbar range to the desired double range
-}
-
-// Function to create trackbars for YCrCb masking and goodFeaturesToTrack parameters
-void createTrackbars()
-{
-    cv::namedWindow("Trackbars", cv::WINDOW_AUTOSIZE);
-
-    // Create YCrCb trackbars
-    cv::createTrackbar("Lower Y (YCrCb)", "Trackbars", &lowerY, 255);
-    cv::createTrackbar("Upper Y (YCrCb)", "Trackbars", &upperY, 255);
-    cv::createTrackbar("Lower Cr (YCrCb)", "Trackbars", &lowerCr, 255);
-    cv::createTrackbar("Upper Cr (YCrCb)", "Trackbars", &upperCr, 255);
-    cv::createTrackbar("Lower Cb (YCrCb)", "Trackbars", &lowerCb, 255);
-    cv::createTrackbar("Upper Cb (YCrCb)", "Trackbars", &upperCb, 255);
-
-    // Create trackbars for goodFeaturesToTrack parameters
-    cv::createTrackbar("Max Corners", "Trackbars", &maxCorners, 500);     // Integer trackbar for maxCorners
-    cv::createTrackbar("Quality Level", "Trackbars", &qualityLevel, 100); // Integer trackbar for qualityLevel (0-100)
-    cv::createTrackbar("Min Distance", "Trackbars", &minDistance, 50);    // Integer trackbar for minDistance
-}
-
-cv::Mat applyYCrCbMask(const cv::Mat &frame)
-{
-    cv::Mat ycrcbFrame, mask;
-    cv::cvtColor(frame, ycrcbFrame, cv::COLOR_BGR2YCrCb);
-
-    // Apply YCrCb masking with trackbar values
-    cv::inRange(ycrcbFrame, cv::Scalar(lowerY, lowerCr, lowerCb), cv::Scalar(upperY, upperCr, upperCb), mask);
-
-    // Refine mask
-    cv::erode(mask, mask, cv::Mat(), cv::Point(-1, -1), 2);
-    cv::dilate(mask, mask, cv::Mat(), cv::Point(-1, -1), 2);
-    cv::GaussianBlur(mask, mask, cv::Size(5, 5), 0);
-
-    return mask;
-}
-
-bool isPointWithinBounds(const cv::Point2f &point, const cv::Size &size)
-{
-    return point.x >= 0 && point.x < size.width && point.y >= 0 && point.y < size.height;
-}
-
+/*
+    Main goals for this program
+        - Learn moreabout the Shi_Tomasi and Harris corner detection aglorithms
+        - Understand why corners are easier to track than edges or flat areas.
+        - Learn more about how cv::calcOpticalFlowPyrLK() computes the motion of detected points between frames.
+        - Implement YCrCb color spacing masking
+*/
 int main()
 {
+    bool recalculate = false;
+    bool runProgram = true;
     cv::VideoCapture cap(0); // Capture video from the webcam
+
     cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
-
-    // Create the trackbars
-    createTrackbars();
 
     if (!cap.isOpened())
     {
@@ -83,30 +25,31 @@ int main()
     }
 
     cv::Mat prevGray, gray, frame;
-
-    // Dynamic array of 2D points
     std::vector<cv::Point2f> prevPoints, currPoints;
 
     // Capture the first frame to initialize previous points
     cap >> frame;
-
-    /* PREPROCESSING SECTION
-        Steps to be taken:
-            1) Convert input frames to grayscale
-            2) Apply noise reduction to avoid detecting false corners due to noise
-            3) Mask irrelevant regions like the background so we can isolate the hand
-    */
     cv::cvtColor(frame, prevGray, cv::COLOR_BGR2GRAY);
 
     // Detect initial features to track (e.g., corners or points on hand)
-    // Initial values are placeholders. These values will be adjusted dynamically using trackbars.
-    cv::goodFeaturesToTrack(prevGray, prevPoints, maxCorners, 0.3, 7);
+    /*
+        void cv::goodFeaturesToTrack(InputArray image, OutputArray corners, int maxCorners, double qualityLevel, double minDistance, InputArray mask = <error>, int blockSize = 3, bool useHarrisDetector = false, double k = (0.04))
+            - prevGray --> InputArray image
+            - prevPoints --> output vector where detected corners are stored
+            - 100 --> maxCorners : The max number of features that can be returned by this function
+                - Features that exceed this value will be ignored
+            - 0.3 --> qualityLevel : A score between 0 and 1
+                - Represents minimum quality required for a feature to be considered
+                - Features with higher scores --> more likely to be accurate
+                - But also increases processing time
+            - 7 --> minDistance : minimum distance between features in pixels
+    */
+    float qualityLevel = 0.4; // Default value 0.3
+    int minDistance = 2;      // Default value 7
+    int maxCorners = 100;     // Default value 100
+    cv::goodFeaturesToTrack(prevGray, prevPoints, maxCorners, qualityLevel, minDistance);
 
-    // Variable to track the number of frames before re-detecting features
-    int frameCount = 0;
-    int reDetectionInterval = 30; // Adjust as needed
-
-    while (true)
+    while (runProgram)
     {
         cap >> frame;
         if (frame.empty())
@@ -115,27 +58,46 @@ int main()
         // Convert to grayscale
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
-        // Apply YCrCb masking
-        cv::Mat gloveMask = applyYCrCbMask(frame);
-
-        // Map trackbar values to their respective double ranges
-        double qualityLevel_double = mapTrackbarToDouble(qualityLevel, 0.0, 1.0); // Map to 0.0 to 1.0 range
-        double minDistance_double = mapTrackbarToDouble(minDistance, 1.0, 20.0);  // Map to 1.0 to 20.0 range
-
         // Calculate optical flow
         std::vector<uchar> status;
         std::vector<float> err;
+        
+        /*
+            void cv::calcOpticalFlowPyrLK(InputArray prevImg, InputArray nextImg, InputArray prevPts, InputOutputArray nextPts, OutputArray status, OutputArray err, cv::Size winSize = cv::Size(21, 21), int maxLevel = 3, cv::TermCriteria criteria = cv::TermCriteria((TermCriteria::COUNT) + (TermCriteria::EPS), 30, (0.01)), int flags = 0, double minEigThreshold = (1.0E-4))
+                - prevGray → InputArray prevImg : Previous frame in grayscale.
+                - gray → InputArray nextImg : Current frame in grayscale.
+                - prevPoints → InputArray prevPts: Points in prevGray to track.
+                - currPoints → InputOutputArray nextPts: Output points in gray (tracked positions).
+                - status → OutputArray status: Indicates if tracking was successful for each point.
+                - err → OutputArray err: Errors associated with each tracked point.
+        */
+        
+        cv::calcOpticalFlowPyrLK(prevGray, gray, prevPoints, currPoints,
+                                 status, err);
 
-        cv::calcOpticalFlowPyrLK(prevGray, gray, prevPoints, currPoints, status, err);
-
-        // Check for points out of bounds and filter them
+        // Filter points based on status and ensure they're valid
         std::vector<cv::Point2f> validPoints;
+
+        // Draw the motion vectors
         for (size_t i = 0; i < currPoints.size(); i++)
         {
-            if (status[i] && isPointWithinBounds(currPoints[i], frame.size()))
+            if (status[i])
             {
+                cv::line(frame, prevPoints[i], currPoints[i],
+                         cv::Scalar(0, 255, 0), 2);
+                cv::circle(frame, currPoints[i], 5, cv::Scalar(0, 0, 255),
+                           -1);
                 validPoints.push_back(currPoints[i]);
             }
+        }
+
+        // Check if valid points are less than 5 and recalculate if necessary
+        if ((std::count(status.begin(), status.end(), 1) < 5) || recalculate)
+        {
+            std::cout << "Points recalculated..." << std::endl;
+            cv::goodFeaturesToTrack(gray, currPoints, maxCorners, qualityLevel, minDistance);
+            validPoints = currPoints; // Use the newly detected points
+            recalculate = false;
         }
 
         // Update prevPoints with valid points
@@ -147,46 +109,34 @@ int main()
             cv::circle(frame, prevPoints[i], 5, cv::Scalar(0, 0, 255), -1);
         }
 
-        // Apply mask to isolate the hand region
-        cv::Mat maskedFrame;
-        cv::bitwise_and(frame, frame, maskedFrame, gloveMask);
-
-        // Re-detect features periodically
-        frameCount++;
-        if (frameCount >= reDetectionInterval)
-        {
-            ;
-            // Detect new features in the current frame
-            /*
-                cv::goodFeaturesToTrack()
-                    - ID points of interest to track in an image such as :
-                        - Corners
-                        - High contrast areas
-                    - These points serve as the input for the optical flow algorithm
-
-                qualityLevel
-                    - Measures quality of detected corners
-                    - Ranges from 0 --> 1
-                        - Higher the value; like 0.3, ensures only strong corners are detected
-
-                minDistance
-                    - Minimum Eculidean distance between detected corners
-                    - Makes sure corners aren't too close to each other to reduce redundancy
-            */
-            // cv::goodFeaturesToTrack(gray, prevPoints, maxCorners, qualityLevel_double, minDistance_double);
-            // frameCount = 0; // Reset frame count
-        }
-
-        // Display results
+        // Display result
         cv::imshow("Optical Flow - Lucas-Kanade", frame);
-        cv::imshow("Glove Mask (YCrCb)", gloveMask);
-        cv::imshow("Masked Frame", maskedFrame);
 
         // Update for next frame
         prevGray = gray.clone();
+        prevPoints = currPoints;
 
-        if (cv::waitKey(1) == 'q')
+        int userInput = cv::waitKey(1);
+        // std::cout << "User key : " << userInput << std::endl;
+
+        switch (userInput)
+        {
+        case 32:
+        {
+            // std::cout << "SPACEBAR" << std::endl;
+            recalculate = true;
             break;
+        }
+        case 113:
+        {
+            std::cout << "EXITING PROGRAM NOW" << std::endl;
+            runProgram = false;
+            break;
+        }
+        }
+
+        // if (cv::waitKey(1) == 'q')
+        //     break;
     }
 
     cap.release();
