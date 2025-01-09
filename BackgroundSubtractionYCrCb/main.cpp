@@ -103,6 +103,7 @@ int main()
 
         // Show the combined mask
         imshow("Hand Gesture Detection", combinedMask);
+        imshow("ycrcbImage", ycrcbImage);
 
         if (waitKey(1) == 'q')
         {

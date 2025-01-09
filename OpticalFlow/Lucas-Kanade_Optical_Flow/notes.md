@@ -1,6 +1,8 @@
 # Plan of Action for Detecting Surgeon Hand Gestures in an Operating Room (OR)
 
-Detecting hand gestures in an operating room (OR) involves overcoming several challenges related to lighting, occlusion, noise, and the precision required in such a sensitive environment. Below is a structured plan of action, including things you should read up on and understand to effectively detect a surgeon’s hand gestures.
+Detecting hand gestures in an operating room (OR) involves overcoming several challenges related to lighting, occlusion, noise, and the precision required in such a sensitive environment. 
+
+Below is a structured plan of action, including things you should read up on and understand to effectively detect a surgeon’s hand gestures.
 
 ## 1. Understand the Problem and Set Requirements
 ### Key Points:
@@ -140,7 +142,7 @@ By following this plan and focusing on the appropriate areas, you will be well-e
 
 ## Eculidean distance 
 ### What is it
-- Straight line distance between two points on a multidimensional space 
+- `Straight line distance` between two points on a multidimensional space 
 - In 2D
   - It's the lenght of the **shortest path** between two points on a plane
 - Is computed using the  **Pythagorean theorem**
@@ -247,6 +249,58 @@ avoid redundancy. |
 - May detect irrelevant features if the background contains strong gradients or textures.
 
 
+---
+
+# Difference between Harris Corner Detection and Shi Thomas
+
+## Harris Corner Detection
+
+### Method:
+Based on the response of a matrix derived from image gradients, identifying locations where intensity varies significantly in both:
+- **x** and **y** directional changes.
+
+### Strengths:
+- Detects corners effectively and robustly.
+- Finds more "significant" features due to its reliance on eigenvalues and a threshold.
+- Useful in relatively static environments.
+
+### Weaknesses:
+- Prone to over-detection in high-texture areas, which can include noise.
+- Does not rank corners, leading to challenges when selecting the most useful points.
+- Sensitive to the **k** parameter (empirical constant), which may require fine-tuning.
+
+---
+
+## Shi-Tomasi Corner Detection
+
+### Method:
+Improves upon Harris by focusing on the minimum eigenvalue of the gradient matrix, ensuring only strong corners are retained.
+
+### Strengths:
+- Better feature ranking by directly using the eigenvalues for quality assessment.
+- More robust and selective than Harris in high-motion environments.
+- Adaptive to real-world applications with dynamic lighting and motion, such as tracking a surgeon’s hand gestures.
+
+### Weaknesses:
+- Slightly higher computational cost due to eigenvalue sorting.
+- Still requires parameter tuning (e.g., `qualityLevel` and `minDistance`).
+
+---
+
+## Comparison for Detecting Hand Gestures in an OR
+
+Shi-Tomasi is generally better suited for dynamic and complex scenarios like detecting hand gestures in an operating room:
+
+### Dynamic Environment:
+Hand gestures involve constant motion and shape changes; Shi-Tomasi handles such situations with greater stability.
+
+### Feature Quality:
+Its eigenvalue-based ranking helps prioritize meaningful points, reducing noise in gesture tracking.
+
+### Selective Detection:
+Limits over-detection in areas with high texture, such as surgical instruments or gloves with fine patterns.
+
+If computational efficiency or simplicity is a priority and the environment is more controlled (e.g., no dramatic lighting or motion variations), Harris could still be an option. However, Shi-Tomasi offers a better balance between robustness and adaptability for OR use cases.
 
 <!-- 
 ## Parameter overview
