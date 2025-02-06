@@ -63,6 +63,29 @@ int main()
     }
 
     cv::namedWindow("Hand Detection - HSV", cv::WINDOW_AUTOSIZE);
+
+    /*
+
+        int cv::createTrackbar	(	const String & 	trackbarname,
+        const String & 	winname,
+        int * 	value,
+        int 	count,
+        TrackbarCallback 	onChange = 0,
+        void * 	userdata = 0
+        )
+
+        Parameters :
+            trackbarname :	Name of the created trackbar.
+            winname	Name of the window that will be used as a parent of the created trackbar.
+
+            value :	Optional pointer to an integer variable whose value reflects the position of the slider. Upon creation, the slider position is defined by this variable.
+
+            count :	Maximal position of the slider. The minimal position is always 0.
+
+            onChange :	Pointer to the function to be called every time the slider changes position. This function should be prototyped as void Foo(int,void*); , where the first parameter is the trackbar position and the second parameter is the user data (see the next parameter). If the callback is the NULL pointer, no callbacks are called, but only value is updated.
+
+            userdata :	User data that is passed as is to the callback. It can be used to handle trackbar events without using global variables.
+    */
     cv::createTrackbar("Low H", "Hand Detection - HSV", &lowH, 180);
     cv::createTrackbar("High H", "Hand Detection - HSV", &highH, 180);
     cv::createTrackbar("Low S", "Hand Detection - HSV", &lowS, 255);
@@ -104,12 +127,12 @@ int main()
         cv::drawContours(contourOutputYCrCb, contoursYCrCb, -1, cv::Scalar(255, 0, 0), 2); // Blue contours for YCrCb
 
         // Show both detection results
-        // cv::imshow("Hand Detection - HSV", contourOutputHSV);
+        cv::imshow("Hand Detection - HSV", contourOutputHSV);
         cv::imshow("Hand Detection - YCrCb", contourOutputYCrCb);
 
         // Show the skin masks for debugging purposes
-        // cv::imshow("Skin Mask - HSV", skinMaskHSV);
-        // cv::imshow("Skin Mask - YCrCb", skinMaskYCrCb);
+        cv::imshow("Skin Mask - HSV", skinMaskHSV);
+        cv::imshow("Skin Mask - YCrCb", skinMaskYCrCb);
 
         // Break the loop if 'q' is pressed
         char key = (char)cv::waitKey(1);

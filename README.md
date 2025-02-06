@@ -1,11 +1,68 @@
-# Where you left off last time Dec 19th
-Mess around with Lucas-Kanade Optical example
-- Focused on : `cv::goodFeaturesToTrack(prevGray, prevPoints, 100, 0.3, 7);`
-  - Going to play around with parameters 
-    - maxCorners
-    - qualityLevel
-    - minDistance
-    - Experiment with/without preprocessing (YCrCb masking, Gaussian blur) to see how it affects the detected points
+# Where you left off last time Feb 5
+- Got better understanding of Lucas-Kanade example [DONE]
+  - Keep in mind points will be tracked in the grayscale frame 
+  - So adjust sliders accordingly so you can detect the hand gestures
+- Next big thing to focus on : feature extraction
+  - Starting with hand skeletonization
+  - And learning convex hulls
+## I. Background Subtraction and Deep Learning-based Segmentation
+
+Improve segmentation robustness using:
+
+*   Background subtraction
+*   MediaPipe Hands or OpenPose for deep learning-based segmentation
+
+Implement adaptive thresholding or skin color detection to make the YCrCb mask more resilient to lighting changes.
+
+## II. Feature Extraction for Gesture Recognition
+
+Explore contour analysis to extract hand shape and key points, including:
+
+*   Convex hull
+*   Hand skeletonization 
+*   Defects to detect finger positions and count them
+
+Use OpenCV or deep learning models for hand landmarks extraction.
+
+## III. Machine Learning for Gesture Classification
+
+Train a classifier (SVM, k-NN, or deep learning) to recognize specific hand gestures using:
+
+*   CNN-based models like MobileNet or TensorFlow/Keras models for real-time gesture recognition
+
+## IV. Robustness to OR Environment
+
+Optimize detection under varying lighting conditions and ensure tracking remains stable despite occlusions or rapid movements by:
+
+*   Refining feature selection
+*   Filtering noisy detections
+*   Reducing false positives
+
+Reduce latency by optimizing the image processing pipeline.
+
+### Robustness Techniques
+
+*   Optimize detection under varying lighting conditions.
+*   Ensure tracking remains stable despite occlusions or rapid movements.
+*   Reduce false positives by refining feature selection and filtering noisy detections.
+
+### Latency Optimization for Real-Time Use
+
+Optimize the image processing pipeline for low-latency recognition using:
+
+*   GPU acceleration (e.g., OpenCV with CUDA, TensorRT for deep learning models)
+*   Limiting the region of interest to the detected han
+
+
+# Things that you're curious about
+- Attempting to adjust YCrCb values on the fly by 
+  - Using adaptive color models instead of fixed YCrCb thresholds that use a model that samples the color of the h and at the start and adjusts dynamically 
+  - Could apply `K-means clusering` or `Gaussian Mixture Model (GMM)` to segment the skin more reliably 
+  - Use ML for skin detection 
+    - Small CNN or DL model could recognize hands w/o relying on manual thresholding 
+  - Incorporate histogram-based skin detection – Analyze the histogram of skin pixels in the first few frames and adjust thresholds dynamically.
+
+
 ## Keep reviewing Lucas-Kanade 
 ---
 

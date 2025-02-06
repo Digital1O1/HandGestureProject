@@ -35,7 +35,7 @@ To effectively work with and extend this program, you should understand the foll
 	* Corners have intensity variations in both horizontal and vertical directions.
 	* When you shift a window around a corner, the intensity changes significantly in all directions.
 2. **Edges**
-	* Edges only have intensity variation in one direction.
+	* Edges only have intensity variation in `one direction.`
 	* If you move along the edge, the intensity doesn’t change significantly.
 3. **Flat Areas**
 	* Flat areas have little or no intensity variation in any direction.
@@ -188,7 +188,7 @@ of an image. It determines how much the pixel intensity varies in different dire
     ]   
     ```
 3. Compute the corner response R:
-   ```math
+```math
 R = det(M) - k * (trace(M))^2
 ```
    where `k` is a sensitivity parameter.

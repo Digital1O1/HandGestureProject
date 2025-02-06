@@ -1,7 +1,7 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include <vector>
-
+#include <cstdlib>
 /*
     Main goals for this program
         - Learn more about the Shi_Tomasi and Harris corner detection algorithms [DONE]
@@ -13,7 +13,10 @@
 int low_Y = 0, high_Y = 255;
 int low_Cr = 0, high_Cr = 255;
 int low_Cb = 0, high_Cb = 255;
-
+void displayLightIntensity(double lightingCondition, float qualityLevel)
+{
+    std::cout << "Light intensity : " << lightingCondition << "\tCurrent qualtiyLevel set to : " << qualityLevel << std::endl;
+}
 void on_trackbar(int, void *)
 {
     // Get current trackbar values
@@ -27,9 +30,12 @@ void on_trackbar(int, void *)
 
 int main()
 {
+    printf("Listing out available camera devices....\r\n");
+    std::system("v4l2-ctl --list-devices");
+
     bool recalculate = false;
     bool runProgram = true;
-    cv::VideoCapture cap(2); // Capture video from the webcam
+    cv::VideoCapture cap(0); // Capture video from the webcam
 
     cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
@@ -49,7 +55,7 @@ int main()
     cv::createTrackbar("High Cb", "Trackbars", &high_Cb, 255, on_trackbar);
 
     cv::Mat prevGray, gray, frame;
-    cv::Mat ycrcbFrame, frameClone, maskedGray, mask;
+    cv::Mat ycrcbFrame, frameClone, maskedGray, mask, blendedGray;
 
     std::vector<cv::Point2f> prevPoints, currPoints;
 
@@ -99,14 +105,15 @@ int main()
     */
     float qualityLevel = 0.4; // Default value 0.3
     int minDistance = 2;      // Default value 7
-    int maxCorners = 100;     // Default value 100
+    int maxCorners = 100;     // Default value 100 and is the max numbers of corners/features that can be detected/returned
     bool pointStatus = true;
-    // cv::goodFeaturesToTrack(prevGray, prevPoints, maxCorners, qualityLevel, minDistance);
-    cv::goodFeaturesToTrack(maskedGray, prevPoints, maxCorners, qualityLevel, minDistance);
+
+    // Detect features on the full grayscale image first
+    cv::goodFeaturesToTrack(prevGray, prevPoints, maxCorners, qualityLevel, minDistance);
 
     // YCrCb values
-    cv::Scalar ycrcbLower(0, 133, 77);
-    cv::Scalar ycrcbUpper(255, 173, 127);
+    // cv::Scalar ycrcbLower(0, 133, 77);
+    // cv::Scalar ycrcbUpper(255, 173, 127);
     while (runProgram)
     {
         cap >> frame;
@@ -124,6 +131,9 @@ int main()
 
         //     cv::bitwise_and(image1, image2, result);
         cv::bitwise_and(gray, gray, maskedGray, mask);
+
+        // Alternative Fix: Blend original grayscale and masked grayscale
+        cv::addWeighted(gray, 0.5, maskedGray, 0.5, 0, blendedGray);
 
         cv::Mat prevPtsMat;
         cv::Mat(prevPoints).convertTo(prevPtsMat, CV_32F);
@@ -150,6 +160,30 @@ int main()
                 - currPoints → InputOutputArray nextPts: Output points in gray (tracked positions).
                 - status → OutputArray status: Indicates if tracking was successful for each point.
                 - err → OutputArray err: Errors associated with each tracked point.
+                - maxLevel - The number of pyramid levels used to downsample the grayscale images by applying a gaussian blur then downsampling by reducing the resolution in half until the desiered number of levels is reached
+                    - The algorithm starts tracking points at hte coarsest level
+                    - Then the estimated motion is propagated upwards towards the finer levels
+                    - But just focus on maxLevel and winSize to ensure good perforamnce and accuracy
+
+            The role of pyramids in prevGray and maskedGray
+                - Why pyramids?
+                    - Opitcal flow assumes small motions (a pixel or two)
+                    - But in the real world motion is typically larger due to fast movements or high resolution frames
+                    - Pyramids break down the image into multiple scales (lower resolutions) to handle motions incrementally
+                - How they work
+                    - Constructing the pyramid
+                        - prevGray and maskedGray are downsampled multiple times to create a pyramid of images
+                        - Each one smaller than the previous level
+                            - Example :
+                                - Level 0 : Orignal image
+                                - Level 1 : Half the resolution of the original
+                                - Level 2 : Half of level 1, ect...
+                    - Tracking from corase to fine
+                        - The algorithm starts tracking at the coarsest level at the lowest resolution
+                        - Large motions are more manageable since the details are smoothed out
+                - Benefits of pyramids
+                    - Enables robust tracking of points despite there being large displacements between frames
+                    - Improves accuracy by refining the flow at finer resolutions
         */
         if (pointStatus)
             cv::calcOpticalFlowPyrLK(prevGray, maskedGray, prevPoints, currPoints, status, err);
@@ -163,20 +197,17 @@ int main()
         // Draw the motion vectors
         for (size_t i = 0; i < currPoints.size(); i++)
         {
-            if (status[i])
+            if (status[i] && mask.at<uchar>(currPoints[i]) > 0) // Ensure points are inside the mask
             {
-                // void cv::line(InputOutputArray img, cv::Point pt1, cv::Point pt2, const cv::Scalar &color, int thickness = 1, int lineType = 8, int shift = 0)
-                cv::line(frame, prevPoints[i], currPoints[i],
-                         cv::Scalar(0, 255, 0), 2);
-                cv::circle(frame, currPoints[i], 5, cv::Scalar(0, 0, 255),
-                           -1);
+                cv::line(frame, prevPoints[i], currPoints[i], cv::Scalar(0, 255, 0), 2);
+                cv::circle(frame, currPoints[i], 5, cv::Scalar(0, 0, 255), -1);
                 validPoints.push_back(currPoints[i]);
             }
         }
         // cv::mean() returns a scalar object
         cv::Scalar avgIntensity = cv::mean(gray);
         double lightingCondition = avgIntensity[0]; // Average grayscale intensity
-        std::cout << "Light intensity : " << lightingCondition << "\tCurrent qualtiyLevel set to : " << qualityLevel << std::endl;
+        // std::cout << "Light intensity : " << lightingCondition << "\tCurrent qualtiyLevel set to : " << qualityLevel << std::endl;
 
         // Dynamically adjust qualityLevel based on lighting
         if (lightingCondition > 150)
@@ -200,7 +231,7 @@ int main()
 
             // void cv::goodFeaturesToTrack(InputArray image, OutputArray corners, int maxCorners, double qualityLevel, double minDistance, InputArray mask = noArray(), int blockSize = 3, bool useHarrisDetector = false, double k = (0.04))
 
-            cv::goodFeaturesToTrack(maskedGray, currPoints, maxCorners, qualityLevel, minDistance);
+            cv::goodFeaturesToTrack(blendedGray, currPoints, maxCorners, qualityLevel, minDistance);
 
             // cv::goodFeaturesToTrack(gray, currPoints, maxCorners, qualityLevel, minDistance);
             validPoints = currPoints; // Use the newly detected points
@@ -218,7 +249,7 @@ int main()
 
         // Display result
         cv::imshow("Optical Flow - Lucas-Kanade", frame);
-        cv::imshow("Masked Grayscale", maskedGray);
+        // cv::imshow("Masked Grayscale", maskedGray);
         cv::imshow("YCrCb Mask", mask);
 
         // Update for next frame
@@ -234,6 +265,8 @@ int main()
         {
             // std::cout << "SPACEBAR" << std::endl;
             recalculate = true;
+            displayLightIntensity(lightingCondition, qualityLevel);
+
             break;
         }
         case 113: // Exit the program
@@ -247,6 +280,7 @@ int main()
         {
             qualityLevel = std::max(0.1f, qualityLevel - 0.1f);
             std::cout << "Decreased qualityLevel: " << qualityLevel << std::endl;
+            displayLightIntensity(lightingCondition, qualityLevel);
             recalculate = true;
             break;
         }

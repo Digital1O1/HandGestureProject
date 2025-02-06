@@ -4,6 +4,8 @@
 // YCrCb skin detection thresholds
 int lowY = 0, lowCr = 133, lowCb = 77;
 int highY = 255, highCr = 173, highCb = 127;
+int threshold1 = 0;
+int threshold2 = 0;
 
 // Function to filter skin regions in YCrCb color space
 cv::Mat filterSkinYCrCb(cv::Mat &frame)
@@ -42,7 +44,8 @@ int main()
     cv::createTrackbar("High Cr", "Hand Detection - YCrCb", &highCr, 255);
     cv::createTrackbar("Low Cb", "Hand Detection - YCrCb", &lowCb, 255);
     cv::createTrackbar("High Cb", "Hand Detection - YCrCb", &highCb, 255);
-
+    cv::createTrackbar("threshold 1", "Hand Detection - YCrCb", &threshold1, 300);
+    cv::createTrackbar("threshold 2", "Hand Detection - YCrCb", &threshold2, 300);
     if (!cap.isOpened())
     {
         std::cerr << "Error: Could not open video capture." << std::endl;
@@ -75,6 +78,7 @@ int main()
         // Option 2: Skip Gaussian Blur (uncomment to try)
         // void cv::adaptiveThreshold(InputArray src, OutputArray dst, double maxValue, int adaptiveMethod, int thresholdType, int blockSize, double C)
         // Check codingNotes.md for more detail about how to determine the right blockSize
+        // Applies threshold dynamically for each pixel based on it's neighborhood which makes it best for images with varying lighting conditions
         cv::adaptiveThreshold(grayFrame, adaptiveThresh, 255, cv::ADAPTIVE_THRESH_GAUSSIAN_C,
                               cv::THRESH_BINARY, 11, 2);
 
@@ -99,7 +103,7 @@ int main()
         cv::drawContours(contourOutputYCrCb, contoursYCrCb, -1, cv::Scalar(255, 0, 0), 2); // Blue
 
         // Apply Canny Edge Detection on the adaptive thresholded image
-        cv::Canny(adaptiveThresh, edges, 100, 200);
+        cv::Canny(adaptiveThresh, edges, threshold1, threshold2);
 
         // Display the results
         // cv::imshow("Original Frame", frame);

@@ -15,11 +15,15 @@ using namespace cv;
 using namespace std;
 using namespace std::chrono;
 
-#define USBCAMERA 2
+#define USBCAMERA 0
 
 atomic<int> frameCounter(0);
 atomic<float> fps(0.0f);
 atomic<bool> updateFPS(true);
+
+// YCrCb skin detection thresholds
+int lowY = 0, lowCr = 133, lowCb = 77;
+int highY = 255, highCr = 173, highCb = 127;
 
 void calculateFPS()
 {
@@ -40,6 +44,15 @@ void calculateFPS()
 
 int main()
 {
+
+    cv::namedWindow("Hand Detection - YCrCb", cv::WINDOW_AUTOSIZE);
+    cv::createTrackbar("Low Y", "Hand Detection - YCrCb", &lowY, 255);
+    cv::createTrackbar("High Y", "Hand Detection - YCrCb", &highY, 255);
+    cv::createTrackbar("Low Cr", "Hand Detection - YCrCb", &lowCr, 255);
+    cv::createTrackbar("High Cr", "Hand Detection - YCrCb", &highCr, 255);
+    cv::createTrackbar("Low Cb", "Hand Detection - YCrCb", &lowCb, 255);
+    cv::createTrackbar("High Cb", "Hand Detection - YCrCb", &highCb, 255);
+
     Ptr<BackgroundSubtractor> pBackSub = createBackgroundSubtractorMOG2();
     VideoCapture usbCamera(USBCAMERA);
 
@@ -84,7 +97,14 @@ int main()
         cvtColor(frame, ycrcbImage, COLOR_BGR2YCrCb);
 
         // Apply skin color segmentation in YCrCb
-        inRange(ycrcbImage, ycrcbLower, ycrcbUpper, skinMaskYCrCbOutput);
+        // inRange(ycrcbImage, ycrcbLower, ycrcbUpper, skinMaskYCrCbOutput);
+
+        // Define lower and upper bounds for skin color in YCrCb color space
+        cv::Scalar lower(lowY, lowCr, lowCb);
+        cv::Scalar upper(highY, highCr, highCb);
+
+        // Apply threshold to isolate skin regions
+        cv::inRange(ycrcbImage, lower, upper, skinMaskYCrCbOutput);
 
         // Apply Background Subtraction on the original frame
         pBackSub->apply(frame, fgMask);
@@ -99,7 +119,8 @@ int main()
         stringstream ss;
         ss << "FPS: " << fixed << setprecision(2) << fps;
         std::cout << "FPS : " << fps << std::endl;
-        putText(frame, ss.str(), Point(15, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 255, 0), 2);
+        putText(combinedMask, ss.str(), Point(15, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(255, 255, 255), 2);
+        putText(ycrcbImage, ss.str(), Point(15, 30), FONT_HERSHEY_SIMPLEX, 1, Scalar(0, 255, 0), 2);
 
         // Show the combined mask
         imshow("Hand Gesture Detection", combinedMask);
