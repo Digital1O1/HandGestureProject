@@ -5,6 +5,13 @@
 - Next big thing to focus on : feature extraction
   - Starting with hand skeletonization
   - And learning convex hulls
+
+## Things you're currently working on 
+- Convex hulls 
+- Foundation with hand skeletonization
+- Feature extraction
+
+
 ## I. Background Subtraction and Deep Learning-based Segmentation
 
 Improve segmentation robustness using:
