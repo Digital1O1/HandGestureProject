@@ -1,12 +1,23 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
+#include <fstream>
 
 #define MAXTHRESH 255
-int treshVal;
-int depthLevel = 0;
+// These values work great if lamp is on
+int treshVal = 130;
+int depthLevel = 6;
 
 int main()
 {
+    // --------------- CSV STUFF --------------- //
+    std::ofstream file("hand_gesture_data.csv", std::ios::app); // Append mode
+
+    // Check if the file is empty before writing the headers
+    if (file.tellp() == 0) // If file is empty, write header
+    {
+        file << "num_convex_hull_points,num_convexity_defects,bounding_box_width,bounding_box_height,aspect_ratio,contour_area,contour_perimeter,label\n";
+    }
+
     // Create trackbars for threshold and depth level
     cv::namedWindow("Convex Hull Detection", cv::WINDOW_AUTOSIZE);
     cv::createTrackbar("treshVal", "Convex Hull Detection", &treshVal, 255);
@@ -24,7 +35,7 @@ int main()
     if (!cap.isOpened())
     {
         std::cerr << "Error: Could not open camera." << std::endl;
-        return -1;
+        return 0;
     }
 
     cv::Mat frame, gray, blurred, thresh;
@@ -63,19 +74,23 @@ int main()
             // Compute convex hull (for drawing)
             std::vector<cv::Point> hull;
             cv::convexHull(contours[largestContourIdx], hull);
+            int numHullPoints = hull.size(); // Store convex hull point count
 
-            // Print the number of convex hull points
-            std::cout << "Convex Hull Points: " << hull.size() << std::endl;
+            std::cout << "Convex Hull Points: " << numHullPoints << std::endl;
 
             // Compute convex hull (for finding defects)
             std::vector<int> hullIndices;
             cv::convexHull(contours[largestContourIdx], hullIndices, false, false);
+            std::sort(hullIndices.begin(), hullIndices.end());
 
             // Compute convexity defects
+            int numDefects = 0;
+            std::vector<cv::Vec4i> defects;
+
             if (hullIndices.size() > 3) // Need at least 4 points to compute defects
             {
-                std::vector<cv::Vec4i> defects;
                 cv::convexityDefects(contours[largestContourIdx], hullIndices, defects);
+                numDefects = defects.size(); // Store defect count
 
                 for (size_t i = 0; i < defects.size(); i++)
                 {
@@ -90,12 +105,11 @@ int main()
                     std::cout << "  Far: (" << far.x << ", " << far.y << ")" << std::endl;
                     std::cout << "  Depth: " << depth << std::endl;
 
-                    // Draw defect points if they are significant
                     if (depth > depthLevel)
                     {
-                        cv::circle(frame, far, 5, cv::Scalar(0, 0, 255), -1);   // Red for defects
-                        cv::circle(frame, start, 5, cv::Scalar(255, 0, 0), -1); // Blue for hull start
-                        cv::circle(frame, end, 5, cv::Scalar(255, 0, 0), -1);   // Blue for hull end
+                        cv::circle(frame, far, 5, cv::Scalar(0, 0, 255), -1);
+                        cv::circle(frame, start, 5, cv::Scalar(255, 0, 0), -1);
+                        cv::circle(frame, end, 5, cv::Scalar(255, 0, 0), -1);
                         cv::line(frame, start, far, cv::Scalar(0, 255, 255), 2);
                         cv::line(frame, end, far, cv::Scalar(0, 255, 255), 2);
                     }
@@ -118,6 +132,19 @@ int main()
             // Draw contours and convex hull
             cv::drawContours(frame, contours, largestContourIdx, cv::Scalar(0, 255, 0), 2);
             cv::polylines(frame, hull, true, cv::Scalar(255, 0, 0), 2);
+
+            // --------------- Write values to CSV file ---------------
+            if (file.is_open())
+            {
+                file << numHullPoints << ","
+                     << numDefects << ","
+                     << bbox.width << ","
+                     << bbox.height << ","
+                     << aspect_ratio << ","
+                     << area << ","
+                     << perimeter << ","
+                     << "gesture_name" << "\n"; // Replace "gesture_name" with actual label so you don't hate life later when it comes to manually labeling everything
+            }
         }
 
         // Display result
@@ -125,6 +152,9 @@ int main()
         if (cv::waitKey(1) == 'q')
             break;
     }
+
+    // Close the file properly after the loop
+    file.close();
 
     cap.release();
     cv::destroyAllWindows();
