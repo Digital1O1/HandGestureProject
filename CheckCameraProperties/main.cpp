@@ -46,6 +46,9 @@ void checkCameraProperties(cv::VideoCapture &cap)
 
 int main()
 {
+
+    // Use sysfs rebind to 'reset' the webcamera
+    // Use lsusb to find webcamera bus ID and replace it with '1-1' as shown in the example below
     cv::VideoCapture cap(2, cv::CAP_V4L2); // Use V4L2 for better control on Linux
 
     if (!cap.isOpened())
@@ -54,17 +57,51 @@ int main()
         return -1;
     }
 
-    // Set camera properties using system() calls for v4l2-ctl
     std::cout << "Configuring camera settings...\n";
+
+    // Disable auto exposure (set to Manual Mode)
+    // Range: 1 = Manual mode | 3 = Aperature Priority Mode
+    system("v4l2-ctl --device=/dev/video2 --set-ctrl=auto_exposure=1");
+
+    // Disable auto white balance
+    // Range: 0 = Manual, 1 = Auto
     system("v4l2-ctl --device=/dev/video2 --set-ctrl=white_balance_automatic=0");
-    system("v4l2-ctl --device=/dev/video2 --set-ctrl=white_balance_temperature=2000");
 
-    checkCameraProperties(cap); // Verify settings
+    // Disable auto focus (use a fixed focus instead)
+    // Range: 0 = Manual, 1 = Auto
+    system("v4l2-ctl --device=/dev/video2 --set-ctrl=focus_automatic_continuous=0");
 
-    // Set resolution manually
-    cap.set(cv::CAP_PROP_FRAME_WIDTH, 720);
-    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 1280);
-    cap.set(cv::CAP_PROP_AUTO_WB, 0);
+    // Set focus to a fixed value
+    // Range: min=-36000, max=36000, step=3600, default=0
+    system("v4l2-ctl --device=/dev/video2 --set-ctrl=focus_absolute=0");
+
+    // Disable exposure dynamic framerate
+    // Range: 0 = Disabled, 1 = Enabled
+    system("v4l2-ctl --device=/dev/video2 --set-ctrl=exposure_dynamic_framerate=0");
+
+    // Set fixed white balance temperature
+    // Range: min=2800K, max=6500K, step=100K, default=4000K
+    system("v4l2-ctl --device=/dev/video2 --set-ctrl=white_balance_temperature=4000");
+
+    // Set exposure time
+    // Range: min=1, max=10000, step=1, default=500
+    system("v4l2-ctl --device=/dev/video2 --set-ctrl=exposure_time_absolute=500");
+
+    // Set brightness
+    // Range: min=0, max=255, step=1, default=128
+    system("v4l2-ctl --device=/dev/video2 --set-ctrl=brightness=128");
+
+    // Set contrast
+    // Range: min=0, max=255, step=1, default=128
+    system("v4l2-ctl --device=/dev/video2 --set-ctrl=contrast=128");
+
+    // Set saturation
+    // Range: min=0, max=255, step=1, default=128
+    system("v4l2-ctl --device=/dev/video2 --set-ctrl=saturation=128");
+
+    // Set sharpness
+    // Range: min=0, max=255, step=1, default=128
+    system("v4l2-ctl --device=/dev/video2 --set-ctrl=sharpness=128");
 
     cv::Mat frame;
     while (1)
@@ -77,11 +114,31 @@ int main()
         }
 
         cv::imshow("Camera Feed", frame);
-        if (cv::waitKey(1) == 'q')
+
+        int input = cv::waitKey(1);
+
+        switch (input)
+        {
+        case 'q':
+        {
+            printf("Quitting program now...\r\n");
+            cap.release();
+            cv::destroyAllWindows();
+            exit(1);
             break;
+        }
+        case ' ':
+        {
+            std::cout << "\n--- Camera Settings ---\n";
+            system("v4l2-ctl --device=/dev/video2 --get-ctrl=auto_exposure");
+            system("v4l2-ctl --device=/dev/video2 --get-ctrl=white_balance_automatic");
+            system("v4l2-ctl --device=/dev/video2 --get-ctrl=focus_absolute");
+        }
+        }
     }
 
     cap.release();
     cv::destroyAllWindows();
     return 0;
 }
+// v4l2-ctl --device=/dev/video2 --all

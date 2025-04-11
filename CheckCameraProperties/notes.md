@@ -1,9 +1,44 @@
 # Camera Control Notes
 
+## Note
+- You can apply v4l2 commands in real time when using terminal
+
 ## Using v4l2-ctl --list-ctrls
 - Lists out all available controls 
 - Some features can't be turned off with OpenCV
 - Best to use v4l2-ctl to control web camera parameters
+
+## List all supported camera settings (Controls)
+- Informed you of 
+  - What can be changed
+  - Their min/max values
+  - Their current values
+```bash
+v4l2-ctl --device=/dev/video2 --list-ctrls
+```
+
+## List devices
+
+```bash
+v4l2-ctl --list-devices
+```
+
+## To check current camera settings
+```bash
+
+# This will list out enum for different modes like 
+#Camera Controls
+
+#                  auto_exposure 0x009a0901 (menu)   : min=0 max=3 default=3 value=1 (Manual Mode)
+#				1: Manual Mode
+#				3: Aperture Priority Mode
+
+v4l2-ctl --device=/dev/video2 --all
+
+# Or a specific setting
+v4l2-ctl --device=/dev/video2 --get-ctrl=white_balance_automatic
+
+```
 
 ```bash
 
@@ -34,13 +69,30 @@ Camera Controls
 ## Examples to disable features 
 ### Disabling exposure_dynamic_framerate
 ```
-v4l2-ctl --set-ctrl=exposure_dynamic_framerate=0
+v4l2-ctl --device=/dev/video2 --set-ctrl=exposure_dynamic_framerate=0
 ```
 ### Disabling Auto Exposure
 ```
-v4l2-ctl --set-ctrl=auto_exposure=1
+v4l2-ctl --device=/dev/video2 --set-ctrl=auto_exposure=1
 ```
 ### Disabling Auto White Balance
 ```
-v4l2-ctl --set-ctrl=white_balance_automatic=0
+v4l2-ctl --device=/dev/video2 --set-ctrl=white_balance_automatic=0
 ```
+
+### To quickly verify if the changes were made
+```
+ffplay -f v4l2 -i /dev/video2
+```
+
+---
+
+# Note : Don't use system() in real world applications
+- It's slow and blocks the entire program
+- Limited error handling
+- Output is 'fragle'
+  - Meaning that if you need to extract values you have to parse the raw text
+  - Which can break if hte tool's output format changes 
+
+# What to use instead
+- V4L2 C API directly
