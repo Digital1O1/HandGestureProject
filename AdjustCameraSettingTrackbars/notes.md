@@ -102,28 +102,28 @@ v4l2-ctl --device=/dev/video2 --all
 ================
 | Control | Address | Type | Min/Max | Default | Value |
 | --- | --- | --- | --- | --- | --- |
-| Brightness | 0x00980900 | int | 0/255 | 128 | 128 |
-| Contrast | 0x00980901 | int | 0/255 | 128 | 128 |
-| Saturation | 0x00980902 | int | 0/255 | 128 | 128 |
-| White Balance Automatic | 0x0098090c | bool | - | 1 | 1 |
-| Gain | 0x00980913 | int | 100/500 | 100 | 100 |
-| Led1 Mode | 0x0a046d05 | menu | 0/3 | 0 | Auto (3) |
-| Led1 Frequency | 0x0a046d06 | int | 0/255 | 0 | 0 |
+| brightness | 0x00980900 | int | 0/255 | 128 | 128 |
+| contrast | 0x00980901 | int | 0/255 | 128 | 128 |
+| saturation | 0x00980902 | int | 0/255 | 128 | 128 |
+| white_balance_automatic | 0x0098090c | bool | - | 1 | 1 |
+| gain | 0x00980913 | int | 100/500 | 100 | 100 |
+| led1_mode | 0x0a046d05 | menu | 0/3 | 0 | Auto (3) |
+| led1_frequency | 0x0a046d06 | int | 0/255 | 0 | 0 |
 
 **Camera Controls**
 ================
 | Control | Address | Type | Min/Max | Default | Value |
 | --- | --- | --- | --- | --- | --- |
-| Auto Exposure | 0x009a0901 | menu | 0/3 | 3 | Manual Mode (1) |
-| Exposure Time Absolute | 0x009a0902 | int | 3/2047 | 250 | 666 |
-| Exposure Dynamic Framerate | 0x009a0903 | bool | - | 0 | 1 |
-| Pan Absolute | 0x009a0908 | int | -36000/36000 | 0 | 0 |
-| Tilt Absolute | 0x009a0909 | int | -36000/36000 | 0 | 0 |
-| Focus Absolute | 0x009a090a | int | 0/250 | 0 | 30 (inactive) |
-| Focus Automatic Continuous | 0x009a090c | bool | - | 1 | 1 |
-| Zoom Absolute | 0x009a090d | int | 100/500 | 100 | 100 |
-| Led1 Mode | 0x0a046d05 | menu | 0/3 | 0 | Off (0) |
-| Led1 Frequency | 0x0a046d06 | int | 0/255 | 0 | 0 |
+| auto_exposure | 0x009a0901 | menu | 0/3 | 3 | Manual Mode (1) |
+| exposure_time_absolute | 0x009a0902 | int | 3/2047 | 250 | 666 |
+| exposure_dynamic_framerate | 0x009a0903 | bool | - | 0 | 1 |
+| pan_absolute | 0x009a0908 | int | -36000/36000 | 0 | 0 |
+| tilt_absolute | 0x009a0909 | int | -36000/36000 | 0 | 0 |
+| focus_absolute | 0x009a090a | int | 0/250 | 0 | 30 (inactive) |
+| focus_automatic Continuous | 0x009a090c | bool | - | 1 | 1 |
+| zoom_absolute | 0x009a090d | int | 100/500 | 100 | 100 |
+| led1_mode | 0x0a046d05 | menu | 0->Off 1->On 2->Blink 3->Auto |
+| led1_frequency | 0x0a046d06 | int | 0/255 | 0 | 0 |
 
 ## Example command 
 ```bash 
