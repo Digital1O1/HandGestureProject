@@ -1,12 +1,12 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
-#include <fstream>
 #include <cstdlib>
 #include <string>
 #include <fstream>
 #include <chrono>
 #include <ctime>
 #include <sstream>
+#include <yaml-cpp/yaml.h>
 
 #define MAXTHRESH 255
 // ----------------- Convex Hull Variables ----------------- //
@@ -122,8 +122,16 @@ void setWhiteBalanceAuto(int value, void *)
     runCommand("v4l2-ctl --device=/dev/video2 --set-ctrl=white_balance_automatic=" + std::to_string(value));
 }
 
-int main()
+int main(int argc, char *argv[])
 {
+    if (argc < 3)
+    {
+        std::cout << "\n\nPlease enter gesture and name for CSV file for data capture\r\n\n";
+    }
+
+    std::string gesture_label = argv[1];
+    std::string csvLabel = argv[2];
+    csvLabel += ".csv";
 
     // --------------- Time stuff for CSV --------------//
     auto now = std::chrono::system_clock::now();
@@ -135,16 +143,60 @@ int main()
     std::string timeStr = ss.str(); // This is your readable date/time string
 
     // -------------- CSV STUFF -------------- //
-    std::ofstream file("hand_gesture_data.csv", std::ios::app); // Append mode
+    std::ofstream file(csvLabel, std::ios::app); // Append mode
 
     // std::ofstream file("hand_gesture_data.csv", std::ios::app); // Append mode
 
     // Check if the file is empty before writing the headers
     if (file.tellp() == 0) // If file is empty, write header
     {
+        // Write this to the CSV header
         file << "exposureValue,focusValue,autofocusEnabled,setAperature,brightnessValue,contrastValue,"
              << "saturationValue,gainValue,sharpnessValue,backlightCompensation,whiteBalanceAuto,whiteBalanceTemperature\n";
     }
+
+    // -------------- Read from YAML -------------- //
+    try
+    {
+        YAML::Node readConfig = YAML::LoadFile("settings.yaml");
+
+        exposureValue = readConfig["exposureValue"].as<int>();
+        focusValue = readConfig["focusValue"].as<int>();
+        autofocusEnabled = readConfig["autofocusEnabled"].as<int>();
+        setAperature = readConfig["setAperature"].as<int>();
+        setAutoExposureValue = readConfig["setAutoExposureValue"].as<int>();
+        brightnessValue = readConfig["brightness"].as<int>();
+        contrastValue = readConfig["contrast"].as<int>();
+        saturationValue = readConfig["saturation"].as<int>();
+        gainValue = readConfig["gain"].as<int>();
+        sharpnessValue = readConfig["sharpness"].as<int>();
+        backlightCompensation = readConfig["backlightCompensation"].as<int>();
+        whiteBalanceTemperature = readConfig["whiteBalanceTemperature"].as<int>();
+        whiteBalanceAuto = readConfig["whiteBalanceAuto"].as<int>();
+
+        std::cout << "\n\n✅ Loaded camera settings from YAML:\n";
+        std::cout << "Exposure: " << exposureValue << "\n";
+        std::cout << "Focus: " << focusValue << "\n";
+        std::cout << "Autofocus Enabled: " << autofocusEnabled << "\n";
+        std::cout << "Aperture: " << setAperature << "\n";
+        std::cout << "Auto Exposure: " << setAutoExposureValue << "\n";
+        std::cout << "Brightness: " << brightnessValue << "\n";
+        std::cout << "Contrast: " << contrastValue << "\n";
+        std::cout << "Saturation: " << saturationValue << "\n";
+        std::cout << "Gain: " << gainValue << "\n";
+        std::cout << "Sharpness: " << sharpnessValue << "\n";
+        std::cout << "Backlight Compensation: " << backlightCompensation << "\n";
+        std::cout << "White Balance Temperature: " << whiteBalanceTemperature << "\n";
+        std::cout << "White Balance Auto: " << whiteBalanceAuto << "\n";
+    }
+    catch (const YAML::Exception &e)
+    {
+        std::cerr << "YAML Error: " << e.what() << std::endl;
+        return 1;
+    }
+
+    std::cout << "Press ENTER to continue...." << std::endl;
+    std::cin.get();
 
     // -------------- Camera -------------- //
     cv::VideoCapture cap(2, cv::CAP_V4L2);
@@ -154,7 +206,7 @@ int main()
 
     cap.set(cv::CAP_PROP_FRAME_WIDTH, width);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, height);
-    cv::namedWindow("Camera Feed", cv::WINDOW_AUTOSIZE);
+    // cv::namedWindow("Camera Feed", cv::WINDOW_AUTOSIZE);
 
     if (!cap.isOpened())
     {
@@ -163,7 +215,6 @@ int main()
     }
 
     // Trackbars
-
     cv::namedWindow("Convex Hull Detection", cv::WINDOW_AUTOSIZE);
     cv::createTrackbar("treshVal", "Convex Hull Detection", &treshVal, MAXTHRESH);
     cv::createTrackbar("depthLevel", "Convex Hull Detection", &depthLevel, MAXTHRESH);
@@ -306,7 +357,7 @@ int main()
                      << aspect_ratio << ","
                      << area << ","
                      << perimeter << ","
-                     << "gesture_name" << "\n"; // Replace "gesture_name" with actual label so you don't hate life later when it comes to manually labeling everything
+                     << "number_1" << "\n"; // Replace "gesture_name" with actual label so you don't hate life later when it comes to manually labeling everything
             }
         }
 
