@@ -7,12 +7,16 @@
 #include <ctime>
 #include <sstream>
 #include <yaml-cpp/yaml.h>
+#include <filesystem>
+#include <unordered_set>
+
+namespace fs = std::filesystem;
 
 #define MAXTHRESH 255
 // ----------------- Convex Hull Variables ----------------- //
-// These values work great if lamp is on
-int treshVal = 98; // With logitec camera
-int depthLevel = 6;
+// These values work with Camera_Settings_2025-06-11_16:52:41.yaml
+int treshVal = 91; // With logitec camera
+int depthLevel = 18;
 
 // ----------------- TrackBar Variables ----------------- //
 // Globals for trackbars
@@ -124,15 +128,42 @@ void setWhiteBalanceAuto(int value, void *)
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3)
+    // Expected parameters to be passed
+    // 1) Gesture label
+    // 2) What to name CSV file
+
+    if (argc < 2)
     {
-        std::cout << "\n\nPlease enter gesture and name for CSV file for data capture\r\n\n";
+        std::cout << "\n\nPlease enter NAME OF GESTURE FOR ML LABEL and THE NAME OF THE CSV FILE to save the data for the ML model\r\n\n";
+        exit(1);
     }
 
     std::string gesture_label = argv[1];
-    std::string csvLabel = argv[2];
+    std::string csvLabel = argv[1];
     csvLabel += ".csv";
 
+    // Serach for existing CSV files
+    std::string target_extension = ".csv";
+    std::unordered_set<std::string> file_names;
+
+    for (const auto &entry : fs::directory_iterator(fs::current_path()))
+    {
+        if (entry.is_regular_file() && entry.path().extension() == target_extension)
+        {
+            std::string name = entry.path().filename().string();
+
+            if (file_names.find(name) != file_names.end())
+            {
+                std::cerr << "⚠️ Duplicate CSV file detected: " << name << std::endl;
+                std::cerr << "Please rename or remove the duplicate file." << std::endl;
+                return 1; // exit with error
+            }
+
+            file_names.insert(name);
+        }
+    }
+
+    std::cout << "✅ No duplicate CSV file names found." << std::endl;
     // --------------- Time stuff for CSV --------------//
     auto now = std::chrono::system_clock::now();
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
@@ -151,14 +182,13 @@ int main(int argc, char *argv[])
     if (file.tellp() == 0) // If file is empty, write header
     {
         // Write this to the CSV header
-        file << "exposureValue,focusValue,autofocusEnabled,setAperature,brightnessValue,contrastValue,"
-             << "saturationValue,gainValue,sharpnessValue,backlightCompensation,whiteBalanceAuto,whiteBalanceTemperature\n";
+        file << "numHullPoints,numDefects,bbox.width,bbox.height,aspect_ratio,area,perimeter,gesture_label\n";
     }
 
     // -------------- Read from YAML -------------- //
     try
     {
-        YAML::Node readConfig = YAML::LoadFile("settings.yaml");
+        YAML::Node readConfig = YAML::LoadFile("/home/digital101/LinuxCodingFolder/HandGestureProject/HandGestureDataSet/GatherData/Camera_Settings_2025-06-11_16:52:41.yaml");
 
         exposureValue = readConfig["exposureValue"].as<int>();
         focusValue = readConfig["focusValue"].as<int>();
@@ -174,20 +204,20 @@ int main(int argc, char *argv[])
         whiteBalanceTemperature = readConfig["whiteBalanceTemperature"].as<int>();
         whiteBalanceAuto = readConfig["whiteBalanceAuto"].as<int>();
 
-        std::cout << "\n\n✅ Loaded camera settings from YAML:\n";
-        std::cout << "Exposure: " << exposureValue << "\n";
-        std::cout << "Focus: " << focusValue << "\n";
-        std::cout << "Autofocus Enabled: " << autofocusEnabled << "\n";
-        std::cout << "Aperture: " << setAperature << "\n";
-        std::cout << "Auto Exposure: " << setAutoExposureValue << "\n";
-        std::cout << "Brightness: " << brightnessValue << "\n";
-        std::cout << "Contrast: " << contrastValue << "\n";
-        std::cout << "Saturation: " << saturationValue << "\n";
-        std::cout << "Gain: " << gainValue << "\n";
-        std::cout << "Sharpness: " << sharpnessValue << "\n";
-        std::cout << "Backlight Compensation: " << backlightCompensation << "\n";
-        std::cout << "White Balance Temperature: " << whiteBalanceTemperature << "\n";
-        std::cout << "White Balance Auto: " << whiteBalanceAuto << "\n";
+        // std::cout << "\n\n✅ Loaded camera settings from YAML:\n";
+        // std::cout << "Exposure: " << exposureValue << "\n";
+        // std::cout << "Focus: " << focusValue << "\n";
+        // std::cout << "Autofocus Enabled: " << autofocusEnabled << "\n";
+        // std::cout << "Aperture: " << setAperature << "\n";
+        // std::cout << "Auto Exposure: " << setAutoExposureValue << "\n";
+        // std::cout << "Brightness: " << brightnessValue << "\n";
+        // std::cout << "Contrast: " << contrastValue << "\n";
+        // std::cout << "Saturation: " << saturationValue << "\n";
+        // std::cout << "Gain: " << gainValue << "\n";
+        // std::cout << "Sharpness: " << sharpnessValue << "\n";
+        // std::cout << "Backlight Compensation: " << backlightCompensation << "\n";
+        // std::cout << "White Balance Temperature: " << whiteBalanceTemperature << "\n";
+        // std::cout << "White Balance Auto: " << whiteBalanceAuto << "\n";
     }
     catch (const YAML::Exception &e)
     {
@@ -195,8 +225,8 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    std::cout << "Press ENTER to continue...." << std::endl;
-    std::cin.get();
+    // std::cout << "Press ENTER to continue...." << std::endl;
+    // std::cin.get();
 
     // -------------- Camera -------------- //
     cv::VideoCapture cap(2, cv::CAP_V4L2);
@@ -282,8 +312,6 @@ int main(int argc, char *argv[])
             cv::convexHull(contours[largestContourIdx], hull);
             int numHullPoints = hull.size(); // Store convex hull point count
 
-            std::cout << "Convex Hull Points: " << numHullPoints << std::endl;
-
             // Compute convex hull (for finding defects)
             std::vector<int> hullIndices;
             cv::convexHull(contours[largestContourIdx], hullIndices, false, false);
@@ -330,6 +358,8 @@ int main(int argc, char *argv[])
                 }
             }
 
+            std::cout << "Convex Hull Points: " << numHullPoints << std::endl;
+
             // Bounding box
             cv::Rect bbox = cv::boundingRect(contours[largestContourIdx]);
             std::cout << "Bounding Box - Width: " << bbox.width << ", Height: " << bbox.height << std::endl;
@@ -357,7 +387,7 @@ int main(int argc, char *argv[])
                      << aspect_ratio << ","
                      << area << ","
                      << perimeter << ","
-                     << "number_1" << "\n"; // Replace "gesture_name" with actual label so you don't hate life later when it comes to manually labeling everything
+                     << csvLabel << "\n"; // Replace "gesture_name" with actual label so you don't hate life later when it comes to manually labeling everything
             }
         }
 
