@@ -13,10 +13,12 @@
 namespace fs = std::filesystem;
 
 #define MAXTHRESH 255
+
+int dynamicThresh = 0;
 // ----------------- Convex Hull Variables ----------------- //
 // These values work with Camera_Settings_2025-06-11_16:52:41.yaml
-int treshVal = 91; // With logitec camera
-int depthLevel = 18;
+int treshVal = 62; // With logitec camera
+int depthLevel = 4;
 
 // ----------------- TrackBar Variables ----------------- //
 // Globals for trackbars
@@ -130,16 +132,21 @@ int main(int argc, char *argv[])
 {
     // Expected parameters to be passed
     // 1) Gesture label
-    // 2) What to name CSV file
 
-    if (argc < 2)
+    if (argc < 3)
     {
-        std::cout << "\n\nPlease enter NAME OF GESTURE FOR ML LABEL and THE NAME OF THE CSV FILE to save the data for the ML model\r\n\n";
+        printf("\n\nEnter name of GESTURE to be recorded and if you want Dynamic thresholding applied\r\n\n");
+
         exit(1);
     }
 
+    // Values passed via CLI
     std::string gesture_label = argv[1];
     std::string csvLabel = argv[1];
+    std::string dynamicArg = argv[2];
+    bool dynamicThresholdFlag = (dynamicArg == "true");
+    std::cout << argv[2] << "\t" << dynamicThresholdFlag;
+
     csvLabel += ".csv";
 
     // Serach for existing CSV files
@@ -182,7 +189,7 @@ int main(int argc, char *argv[])
     if (file.tellp() == 0) // If file is empty, write header
     {
         // Write this to the CSV header
-        file << "numHullPoints,numDefects,bbox.width,bbox.height,aspect_ratio,area,perimeter,gesture_label\n";
+        file << "threshVal,depthLevel,numHullPoints,numDefects,bbox.width,bbox.height,aspect_ratio,area,perimeter,gesture_label\n";
     }
 
     // -------------- Read from YAML -------------- //
@@ -204,20 +211,30 @@ int main(int argc, char *argv[])
         whiteBalanceTemperature = readConfig["whiteBalanceTemperature"].as<int>();
         whiteBalanceAuto = readConfig["whiteBalanceAuto"].as<int>();
 
-        // std::cout << "\n\n✅ Loaded camera settings from YAML:\n";
-        // std::cout << "Exposure: " << exposureValue << "\n";
-        // std::cout << "Focus: " << focusValue << "\n";
-        // std::cout << "Autofocus Enabled: " << autofocusEnabled << "\n";
-        // std::cout << "Aperture: " << setAperature << "\n";
-        // std::cout << "Auto Exposure: " << setAutoExposureValue << "\n";
-        // std::cout << "Brightness: " << brightnessValue << "\n";
-        // std::cout << "Contrast: " << contrastValue << "\n";
-        // std::cout << "Saturation: " << saturationValue << "\n";
-        // std::cout << "Gain: " << gainValue << "\n";
-        // std::cout << "Sharpness: " << sharpnessValue << "\n";
-        // std::cout << "Backlight Compensation: " << backlightCompensation << "\n";
-        // std::cout << "White Balance Temperature: " << whiteBalanceTemperature << "\n";
-        // std::cout << "White Balance Auto: " << whiteBalanceAuto << "\n";
+        // Set the values
+        setBrightness(brightnessValue, nullptr);
+        setContrast(contrastValue, nullptr);
+        setSaturation(saturationValue, nullptr);
+        setGain(gainValue, nullptr);
+        setSharpness(sharpnessValue, nullptr);
+        setBacklightComp(backlightCompensation, nullptr);
+        setWhiteBalanceTemperature(whiteBalanceTemperature, nullptr);
+        setWhiteBalanceAuto(whiteBalanceAuto, nullptr);
+
+        std::cout << "\n\n✅ Loaded camera settings from YAML:\n";
+        std::cout << "Exposure: " << exposureValue << "\n";
+        std::cout << "Focus: " << focusValue << "\n";
+        std::cout << "Autofocus Enabled: " << autofocusEnabled << "\n";
+        std::cout << "Aperture: " << setAperature << "\n";
+        std::cout << "Auto Exposure: " << setAutoExposureValue << "\n";
+        std::cout << "Brightness: " << brightnessValue << "\n";
+        std::cout << "Contrast: " << contrastValue << "\n";
+        std::cout << "Saturation: " << saturationValue << "\n";
+        std::cout << "Gain: " << gainValue << "\n";
+        std::cout << "Sharpness: " << sharpnessValue << "\n";
+        std::cout << "Backlight Compensation: " << backlightCompensation << "\n";
+        std::cout << "White Balance Temperature: " << whiteBalanceTemperature << "\n";
+        std::cout << "White Balance Auto: " << whiteBalanceAuto << "\n";
     }
     catch (const YAML::Exception &e)
     {
@@ -256,10 +273,29 @@ int main(int argc, char *argv[])
         if (frame.empty())
             break;
 
+        if (dynamicThresholdFlag)
+        {
+            cv::Scalar meanIntensity = cv::mean(gray);
+            dynamicThresh = static_cast<int>(meanIntensity[0] * 0.85); // 'Taking' whatever percentage 
+                                                                       //  Of the average brightness of the
+                                                                       //  Grayscale to use as s threshold 
+                                                                       //  Value
+                                                                       // Adjust this number to keep more (increase it) of the background
+                                                                       // Example : 0.9 --> Keep more of background but could be too conservative 
+                                                                       //           0.7 --> More aggressive but might  lose finger details in shadow 
+                                                                       //           8.5 --> Good balance 
+            dynamicThresh = std::clamp(dynamicThresh, 30, 150);
+
+            treshVal = dynamicThresh; // Update global or trackbar value
+        }
+
         // Convert to grayscale and apply threshold
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
         cv::GaussianBlur(gray, blurred, cv::Size(5, 5), 0);
         cv::threshold(blurred, thresh, treshVal, MAXTHRESH, cv::THRESH_BINARY); // If pixel greater than thresVal, set it to 255, other than that set it to 0
+
+        // Calculate brightness based on grayscale image
+        // Assume you already have gray (grayscale image)
 
         // Find contours
         std::vector<std::vector<cv::Point>> contours;
@@ -331,7 +367,9 @@ int main(int argc, char *argv[])
                     cv::Point start = contours[largestContourIdx][defects[i][0]]; // Start of defect
                     cv::Point end = contours[largestContourIdx][defects[i][1]];   // End of defect
                     cv::Point far = contours[largestContourIdx][defects[i][2]];   // Deepest point of defect
-                    float depth = defects[i][3] / 256.0;                          // Defect depth (conexity defect depth) that measures how deep the indentation between two points on the conex hull on a person's hand contour
+                    float depth = defects[i][3] / 256.0;                          // Defect depth (conexity defect depth) that measures how deep the
+                                                                                  // indentation between two points on the
+                                                                                  // conex hull on a person's hand contour
 
                     // Camera parameters
                     // double autoWB = cap.get(cv::CAP_PROP_AUTO_WB);
@@ -372,6 +410,7 @@ int main(int argc, char *argv[])
             double area = cv::contourArea(contours[largestContourIdx]);
             double perimeter = cv::arcLength(contours[largestContourIdx], true);
             std::cout << "Contour Area: " << area << ", Perimeter: " << perimeter << std::endl;
+            std::cout << "dynamicThresh : " << dynamicThresh << std::endl;
 
             // Draw contours and convex hull
             cv::drawContours(frame, contours, largestContourIdx, cv::Scalar(0, 255, 0), 2);
@@ -380,14 +419,16 @@ int main(int argc, char *argv[])
             // --------------- Write values to CSV file ---------------
             if (file.is_open())
             {
-                file << numHullPoints << ","
+                file << treshVal << ","
+                     << depthLevel << ","
+                     << numHullPoints << ","
                      << numDefects << ","
                      << bbox.width << ","
                      << bbox.height << ","
                      << aspect_ratio << ","
                      << area << ","
                      << perimeter << ","
-                     << csvLabel << "\n"; // Replace "gesture_name" with actual label so you don't hate life later when it comes to manually labeling everything
+                     << csvLabel << "\n";
             }
         }
 

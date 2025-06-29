@@ -65,6 +65,9 @@
     "typeindex": "cpp",
     "typeinfo": "cpp",
     "variant": "cpp",
-    "valarray": "cpp"
+    "valarray": "cpp",
+    "filesystem": "cpp",
+    "codecvt": "cpp",
+    "unordered_set": "cpp"
   }
 }
