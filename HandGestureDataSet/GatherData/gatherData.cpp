@@ -17,8 +17,8 @@ namespace fs = std::filesystem;
 int dynamicThresh = 0;
 // ----------------- Convex Hull Variables ----------------- //
 // These values work with Camera_Settings_2025-06-11_16:52:41.yaml
-int treshVal = 62; // With logitec camera
-int depthLevel = 4;
+int treshVal = 75; // With logitec camera
+int depthLevel = 10;
 
 // ----------------- TrackBar Variables ----------------- //
 // Globals for trackbars
@@ -135,7 +135,7 @@ int main(int argc, char *argv[])
 
     if (argc < 3)
     {
-        printf("\n\nEnter name of GESTURE to be recorded and if you want Dynamic thresholding applied\r\n\n");
+        printf("\n\nEnter name of GESTURE to be recorded and if you want Dynamic thresholding applied (true/false)\r\n\n");
 
         exit(1);
     }
@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
     // -------------- Read from YAML -------------- //
     try
     {
-        YAML::Node readConfig = YAML::LoadFile("/home/digital101/LinuxCodingFolder/HandGestureProject/HandGestureDataSet/GatherData/Camera_Settings_2025-06-11_16:52:41.yaml");
+        YAML::Node readConfig = YAML::LoadFile("/home/digital101/LinuxCodingFolder/HandGestureProject/HandGestureDataSet/GatherData/Camera_Settings_2025-06-28_15:41:29.yaml");
 
         exposureValue = readConfig["exposureValue"].as<int>();
         focusValue = readConfig["focusValue"].as<int>();
@@ -267,6 +267,13 @@ int main(int argc, char *argv[])
     cv::createTrackbar("depthLevel", "Convex Hull Detection", &depthLevel, MAXTHRESH);
     cv::Mat frame, gray, blurred, thresh;
 
+    // auto now = std::chrono::steady_clock::now();
+    // int secondsUntilNextSample = timeOut - std::chrono::duration_cast<std::chrono::seconds>(now - lastSampleTime).count();
+
+    cv::waitKey(1000);
+    int recordDuration = 5; // in seconds
+    auto startTime = std::chrono::steady_clock::now();
+
     while (true)
     {
         cap >> frame;
@@ -276,14 +283,14 @@ int main(int argc, char *argv[])
         if (dynamicThresholdFlag)
         {
             cv::Scalar meanIntensity = cv::mean(gray);
-            dynamicThresh = static_cast<int>(meanIntensity[0] * 0.85); // 'Taking' whatever percentage 
+            dynamicThresh = static_cast<int>(meanIntensity[0] * 0.85); // 'Taking' whatever percentage
                                                                        //  Of the average brightness of the
-                                                                       //  Grayscale to use as s threshold 
+                                                                       //  Grayscale to use as s threshold
                                                                        //  Value
                                                                        // Adjust this number to keep more (increase it) of the background
-                                                                       // Example : 0.9 --> Keep more of background but could be too conservative 
-                                                                       //           0.7 --> More aggressive but might  lose finger details in shadow 
-                                                                       //           8.5 --> Good balance 
+                                                                       // Example : 0.9 --> Keep more of background but could be too conservative
+                                                                       //           0.7 --> More aggressive but might  lose finger details in shadow
+                                                                       //           8.5 --> Good balance
             dynamicThresh = std::clamp(dynamicThresh, 30, 150);
 
             treshVal = dynamicThresh; // Update global or trackbar value
@@ -416,20 +423,33 @@ int main(int argc, char *argv[])
             cv::drawContours(frame, contours, largestContourIdx, cv::Scalar(0, 255, 0), 2);
             cv::polylines(frame, hull, true, cv::Scalar(255, 0, 0), 2);
 
-            // --------------- Write values to CSV file ---------------
-            if (file.is_open())
-            {
-                file << treshVal << ","
-                     << depthLevel << ","
-                     << numHullPoints << ","
-                     << numDefects << ","
-                     << bbox.width << ","
-                     << bbox.height << ","
-                     << aspect_ratio << ","
-                     << area << ","
-                     << perimeter << ","
-                     << csvLabel << "\n";
+            auto now = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - startTime).count();
+            int remainingTime = recordDuration - static_cast<int>(elapsed);
+            if (remainingTime <= 0)
+                break;
+
+            else
+            { // --------------- Write values to CSV file ---------------
+                if (file.is_open())
+                {
+                    file << treshVal << ","
+                         << depthLevel << ","
+                         << numHullPoints << ","
+                         << numDefects << ","
+                         << bbox.width << ","
+                         << bbox.height << ","
+                         << aspect_ratio << ","
+                         << area << ","
+                         << perimeter << ","
+                         << csvLabel << "\n";
+                }
             }
+
+            // Draw countdown on frame
+            std::string countdownText = "Recording ends in: " + std::to_string(remainingTime) + "s";
+            cv::putText(frame, countdownText, cv::Point(50, 50),
+                        cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 2);
         }
 
         // Display result

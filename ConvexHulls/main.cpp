@@ -4,8 +4,8 @@
 #include <cstdlib>
 #define MAXTHRESH 255
 // These values work great if lamp is on
-int treshVal = 98; // With logitec camera
-int depthLevel = 6;
+int treshVal = 75; // With logitec camera
+int depthLevel = 10;
 
 int main()
 {
@@ -43,7 +43,6 @@ int main()
     cap.set(cv::CAP_PROP_FRAME_WIDTH, width);
     cap.set(cv::CAP_PROP_FRAME_HEIGHT, height);
 
-    std::cin.get();
     // cap.set(cv::CAP_PROP_AUTO_WB, 0); // Must use v4l2-ctl --set-ctrl=auto_exposure=1 to disable auto white balance
     //  cap.set(cv::CAP_PROP_AUTO_WB, 0);
     //   cap.set(cv::CAP_PROP_BRIGHTNESS, 96);
