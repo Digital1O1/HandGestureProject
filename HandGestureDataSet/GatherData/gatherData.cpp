@@ -17,7 +17,7 @@ namespace fs = std::filesystem;
 int dynamicThresh = 0;
 // ----------------- Convex Hull Variables ----------------- //
 // These values work with Camera_Settings_2025-06-11_16:52:41.yaml
-int treshVal = 75; // With logitec camera
+int treshVal = 144; // With logitec camera
 int depthLevel = 10;
 
 // ----------------- TrackBar Variables ----------------- //
@@ -269,9 +269,18 @@ int main(int argc, char *argv[])
 
     // auto now = std::chrono::steady_clock::now();
     // int secondsUntilNextSample = timeOut - std::chrono::duration_cast<std::chrono::seconds>(now - lastSampleTime).count();
+    float fontThickness = 2.0;
+    for (int i = 3; i >= 1; --i)
+    {
+        cv::Mat countdownFrame(480, 640, CV_8UC3, cv::Scalar(0, 0, 0)); // Black screen
+        std::string msg = "Starting in: " + std::to_string(i);
+        cv::putText(countdownFrame, msg, cv::Point(100, 240),
+                    cv::FONT_HERSHEY_SIMPLEX, fontThickness, cv::Scalar(0, 255, 255), 3);
+        cv::imshow("Convex Hull Detection", countdownFrame);
+        cv::waitKey(750); // Wait 1 second
+    }
 
-    cv::waitKey(1000);
-    int recordDuration = 5; // in seconds
+    int recordDuration = 30; // in seconds
     auto startTime = std::chrono::steady_clock::now();
 
     while (true)
@@ -423,35 +432,42 @@ int main(int argc, char *argv[])
             cv::drawContours(frame, contours, largestContourIdx, cv::Scalar(0, 255, 0), 2);
             cv::polylines(frame, hull, true, cv::Scalar(255, 0, 0), 2);
 
-            auto now = std::chrono::steady_clock::now();
-            auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - startTime).count();
-            int remainingTime = recordDuration - static_cast<int>(elapsed);
-            if (remainingTime <= 0)
-                break;
+            // auto now = std::chrono::steady_clock::now();
+            // auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - startTime).count();
+            // int remainingTime = recordDuration - static_cast<int>(elapsed);
+            // if (remainingTime <= 0)
+            //     break;
 
-            else
-            { // --------------- Write values to CSV file ---------------
-                if (file.is_open())
-                {
-                    file << treshVal << ","
-                         << depthLevel << ","
-                         << numHullPoints << ","
-                         << numDefects << ","
-                         << bbox.width << ","
-                         << bbox.height << ","
-                         << aspect_ratio << ","
-                         << area << ","
-                         << perimeter << ","
-                         << csvLabel << "\n";
-                }
+            // --------------- Write values to CSV file ---------------
+            if (file.is_open())
+            {
+                file << treshVal << ","
+                     << depthLevel << ","
+                     << numHullPoints << ","
+                     << numDefects << ","
+                     << bbox.width << ","
+                     << bbox.height << ","
+                     << aspect_ratio << ","
+                     << area << ","
+                     << perimeter << ","
+                     << csvLabel << "\n";
             }
 
-            // Draw countdown on frame
-            std::string countdownText = "Recording ends in: " + std::to_string(remainingTime) + "s";
-            cv::putText(frame, countdownText, cv::Point(50, 50),
-                        cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 2);
+            // // Draw countdown on frame
+            // std::string countdownText = "Recording ends in: " + std::to_string(remainingTime) + "s";
+            // cv::putText(frame, countdownText, cv::Point(50, 50),
+            //             cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 2);
         }
+        auto now = std::chrono::steady_clock::now();
+        auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(now - startTime).count();
+        int remainingTime = recordDuration - static_cast<int>(elapsed);
+        if (remainingTime <= 0)
+            break;
 
+        // Draw countdown on frame
+        std::string countdownText = "Recording ends in: " + std::to_string(remainingTime) + "s";
+        cv::putText(frame, countdownText, cv::Point(25, 25),
+                    cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 2);
         // Display result
         cv::imshow("Convex Hull Detection", frame);
         if (cv::waitKey(1) == 'q')

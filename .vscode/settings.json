@@ -69,5 +69,6 @@
     "filesystem": "cpp",
     "codecvt": "cpp",
     "unordered_set": "cpp"
-  }
+  },
+  "python-envs.pythonProjects": []
 }

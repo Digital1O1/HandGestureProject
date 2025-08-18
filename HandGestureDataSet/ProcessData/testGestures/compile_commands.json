@@ -1,0 +1,20 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-c",
+      "-std=c++17",
+      "-O2",
+      "-I/usr/include/opencv4",
+      "-I/home/digital101/onnxruntime-linux-x64-gpu-1.17.1/include",
+      "-I/usr/local/cuda-12.3/include",
+      "-Wl,-rpath=/home/digital101/onnxruntime-linux-x64-gpu-1.17.1/lib",
+      "-o",
+      "gesture_detector",
+      "main.cpp"
+    ],
+    "directory": "/home/digital101/LinuxCodingFolder/HandGestureProject/HandGestureDataSet/ProcessData/testGestures",
+    "file": "/home/digital101/LinuxCodingFolder/HandGestureProject/HandGestureDataSet/ProcessData/testGestures/main.cpp",
+    "output": "/home/digital101/LinuxCodingFolder/HandGestureProject/HandGestureDataSet/ProcessData/testGestures/gesture_detector"
+  }
+]
