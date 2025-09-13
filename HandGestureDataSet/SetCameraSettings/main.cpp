@@ -311,6 +311,8 @@ int main()
     cameraSettings["backlightCompensation"] = backlightCompensation;
     cameraSettings["whiteBalanceTemperature"] = whiteBalanceTemperature;
     cameraSettings["whiteBalanceAuto"] = whiteBalanceAuto;
+    cameraSettings["threshVal"] = treshVal;
+    cameraSettings["depthLevel"] = depthLevel;
 
     try
     {

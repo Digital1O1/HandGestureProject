@@ -11,5 +11,5 @@ sharpness: 128
 backlightCompensation: 0
 whiteBalanceTemperature: 4000
 whiteBalanceAuto: 1
-threshVal: 128
+threshVal: 132
 depthLevel: 10

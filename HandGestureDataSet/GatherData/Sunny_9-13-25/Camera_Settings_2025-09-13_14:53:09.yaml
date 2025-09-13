@@ -1,9 +1,9 @@
-exposureValue: 266
+exposureValue: 3
 focusValue: 30
 autofocusEnabled: 0
 setAperature: 3
 setAutoExposureValue: 0
-brightness: 128
+brightness: 138
 contrast: 128
 saturation: 128
 gain: 255
@@ -11,5 +11,5 @@ sharpness: 128
 backlightCompensation: 0
 whiteBalanceTemperature: 4000
 whiteBalanceAuto: 1
-threshVal: 128
+threshVal: 126
 depthLevel: 10

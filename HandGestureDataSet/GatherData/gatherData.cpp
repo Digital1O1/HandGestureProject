@@ -26,8 +26,9 @@ int exposureValue = 3;    // Range: 3–2047 (for exposure_time_absolute)
 int focusValue = 30;      // Range: 0–250
 int autofocusEnabled = 1; // 1 = on, 0 = off
 int setAperature = 3;
-int setAutoExposureValue = 3;
+int setAutoExposureValue = 0;
 int setPanAbsoluteValue = 0;
+int setAutoExposure_ = 0;
 
 // Additional globals for recommended controls
 int brightnessValue = 128;
@@ -88,6 +89,11 @@ void onAutofocusToggle(int value, void *)
 
 // Additional recommended control callbacks
 
+void setExposureTimeAbsolute(int value, void *)
+{
+    runCommand("v4l2-ctl --device=/dev/video2 ---set-ctrl=exposure_time_absolute=" + std::to_string(value));
+}
+
 void setBrightness(int value, void *)
 {
     runCommand("v4l2-ctl --device=/dev/video2 --set-ctrl=brightness=" + std::to_string(value));
@@ -143,17 +149,31 @@ int main(int argc, char *argv[])
     // Values passed via CLI
     std::string gesture_label = argv[1];
     std::string csvLabel = argv[1];
-    std::string dynamicArg = argv[2];
-    bool dynamicThresholdFlag = (dynamicArg == "true");
-    std::cout << argv[2] << "\t" << dynamicThresholdFlag;
+    std::string yamlFilePath = argv[2];
+    std::string savePath = argv[3];
+
+    // std::string dynamicArg = argv[2];
+    //  bool dynamicThresholdFlag = (dynamicArg == "true");
+    //  std::cout << argv[2] << "\t" << dynamicThresholdFlag;
 
     csvLabel += ".csv";
+
+    // Serach for existing CSV files
+    csvLabel += ".csv";
+    fs::path outputFilePath = fs::path(savePath) / csvLabel;
+
+    if (!fs::exists(savePath))
+    {
+        std::cerr << "❌ Save path does not exist: " << savePath << std::endl;
+        return 1;
+    }
 
     // Serach for existing CSV files
     std::string target_extension = ".csv";
     std::unordered_set<std::string> file_names;
 
-    for (const auto &entry : fs::directory_iterator(fs::current_path()))
+    // Look for duplicates in savePath (not current_path)
+    for (const auto &entry : fs::directory_iterator(savePath))
     {
         if (entry.is_regular_file() && entry.path().extension() == target_extension)
         {
@@ -171,6 +191,8 @@ int main(int argc, char *argv[])
     }
 
     std::cout << "✅ No duplicate CSV file names found." << std::endl;
+    std::cout << "✅ Saving CSV to: " << outputFilePath << std::endl;
+
     // --------------- Time stuff for CSV --------------//
     auto now = std::chrono::system_clock::now();
     std::time_t now_c = std::chrono::system_clock::to_time_t(now);
@@ -181,7 +203,7 @@ int main(int argc, char *argv[])
     std::string timeStr = ss.str(); // This is your readable date/time string
 
     // -------------- CSV STUFF -------------- //
-    std::ofstream file(csvLabel, std::ios::app); // Append mode
+    std::ofstream file(outputFilePath, std::ios::app); // Append mode
 
     // std::ofstream file("hand_gesture_data.csv", std::ios::app); // Append mode
 
@@ -195,13 +217,16 @@ int main(int argc, char *argv[])
     // -------------- Read from YAML -------------- //
     try
     {
-        YAML::Node readConfig = YAML::LoadFile("/home/digital101/LinuxCodingFolder/HandGestureProject/HandGestureDataSet/GatherData/Camera_Settings_2025-06-28_15:41:29.yaml");
+        std::cout << "Yaml file path :  " << yamlFilePath << std::endl;
+        YAML::Node readConfig = YAML::LoadFile(yamlFilePath);
+        // YAML::Node readConfig = YAML::LoadFile("/home/digital101/LinuxCodingFolder/HandGestureProject/HandGestureDataSet/GatherData/Camera_Settings_2025-06-28_15:41:29.yaml");
 
         exposureValue = readConfig["exposureValue"].as<int>();
         focusValue = readConfig["focusValue"].as<int>();
         autofocusEnabled = readConfig["autofocusEnabled"].as<int>();
         setAperature = readConfig["setAperature"].as<int>();
-        setAutoExposureValue = readConfig["setAutoExposureValue"].as<int>();
+        setAutoExposure_ = readConfig["setAutoExposureValue"].as<int>();
+
         brightnessValue = readConfig["brightness"].as<int>();
         contrastValue = readConfig["contrast"].as<int>();
         saturationValue = readConfig["saturation"].as<int>();
@@ -210,8 +235,14 @@ int main(int argc, char *argv[])
         backlightCompensation = readConfig["backlightCompensation"].as<int>();
         whiteBalanceTemperature = readConfig["whiteBalanceTemperature"].as<int>();
         whiteBalanceAuto = readConfig["whiteBalanceAuto"].as<int>();
+        treshVal = readConfig["threshVal"].as<int>();
+        depthLevel = readConfig["depthLevel"].as<int>();
 
         // Set the values
+        setAutoExposure(setAutoExposure_, nullptr); // manual (1) or auto (3)
+        setExposureTime(exposureValue, nullptr);    // actual exposure timey
+        setExposureTimeAbsolute(setAutoExposureValue, nullptr);
+        setAutoExposure(exposureValue, nullptr);
         setBrightness(brightnessValue, nullptr);
         setContrast(contrastValue, nullptr);
         setSaturation(saturationValue, nullptr);
@@ -235,6 +266,7 @@ int main(int argc, char *argv[])
         std::cout << "Backlight Compensation: " << backlightCompensation << "\n";
         std::cout << "White Balance Temperature: " << whiteBalanceTemperature << "\n";
         std::cout << "White Balance Auto: " << whiteBalanceAuto << "\n";
+        // std::cin.get();
     }
     catch (const YAML::Exception &e)
     {
@@ -289,21 +321,21 @@ int main(int argc, char *argv[])
         if (frame.empty())
             break;
 
-        if (dynamicThresholdFlag)
-        {
-            cv::Scalar meanIntensity = cv::mean(gray);
-            dynamicThresh = static_cast<int>(meanIntensity[0] * 0.85); // 'Taking' whatever percentage
-                                                                       //  Of the average brightness of the
-                                                                       //  Grayscale to use as s threshold
-                                                                       //  Value
-                                                                       // Adjust this number to keep more (increase it) of the background
-                                                                       // Example : 0.9 --> Keep more of background but could be too conservative
-                                                                       //           0.7 --> More aggressive but might  lose finger details in shadow
-                                                                       //           8.5 --> Good balance
-            dynamicThresh = std::clamp(dynamicThresh, 30, 150);
+        // if (dynamicThresholdFlag)
+        // {
+        //     cv::Scalar meanIntensity = cv::mean(gray);
+        //     dynamicThresh = static_cast<int>(meanIntensity[0] * 0.85); // 'Taking' whatever percentage
+        //                                                                //  Of the average brightness of the
+        //                                                                //  Grayscale to use as s threshold
+        //                                                                //  Value
+        //                                                                // Adjust this number to keep more (increase it) of the background
+        //                                                                // Example : 0.9 --> Keep more of background but could be too conservative
+        //                                                                //           0.7 --> More aggressive but might  lose finger details in shadow
+        //                                                                //           8.5 --> Good balance
+        //     dynamicThresh = std::clamp(dynamicThresh, 30, 150);
 
-            treshVal = dynamicThresh; // Update global or trackbar value
-        }
+        //     treshVal = dynamicThresh; // Update global or trackbar value
+        // }
 
         // Convert to grayscale and apply threshold
         cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
